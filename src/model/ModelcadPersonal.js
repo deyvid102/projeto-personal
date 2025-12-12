@@ -10,4 +10,4 @@ const CadPersonalSchema = new mongoose.Schema({
     senha: String,
 });
 
-export default mongoose.model('CadPersonal', CadPersonalSchema);
+export default mongoose.model('CadPersonalSchema', CadPersonalSchema);
