@@ -20,6 +20,19 @@ export const listarPersonal = async (req, res) => {
     }
 };
 
+// READ - buscar por ID
+export const listarPersonalPorId = async (req, res) => {
+    try {
+        const personal = await ModelcadPersonal.findById(req.params.id);
+        if (!personal) {
+            return res.status(404).json({ message: "Personal não encontrado" });
+        }
+        res.json(personal);
+    } catch (error) {
+        res.status(500).json({ error });
+    }
+};
+
 // UPDATE
 export const atualizarPersonal = async (req, res) => {
     try {

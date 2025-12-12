@@ -1,8 +1,8 @@
 import mongoose from "mongoose";
 
-const CadPersonalSchema = new mongoose.Schema({
+const CadAlunoSchema = new mongoose.Schema({
 
-     nomeUsu: {
+    nomeUsu: {
         type: String,
         required: true
     },
@@ -11,6 +11,10 @@ const CadPersonalSchema = new mongoose.Schema({
         required: true
     },
     cpf: {
+        type: String,
+        required: true
+    },
+    idade: {
         type: String,
         required: true
     },
@@ -37,6 +41,13 @@ const CadPersonalSchema = new mongoose.Schema({
         required: true
     },
 
+    // FK: cada usuário pode ter um personal atribuído
+    fk_personal: {
+        type: mongoose.Schema.Types.ObjectId,
+        ref: "CadPersonalSchema",
+        required: false
+    }
+
 });
 
-export default mongoose.model('CadPersonalSchema', CadPersonalSchema);
+export default mongoose.model('CadAlunoSchema', CadAlunoSchema);

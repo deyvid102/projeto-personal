@@ -2,6 +2,7 @@ import express from "express";
 import dotenv from "dotenv";
 import mongoose from "mongoose";
 import CadPersonalRoutes from "./routes/CadPersonalRoutes.js";
+import CadAlunoRoutes from "./routes/CadAlunoRoutes.js"
 
 dotenv.config();
 
@@ -20,8 +21,9 @@ const connectDB = async () => {
 };
 
 connectDB();
-app.use("/personal", CadPersonalRoutes);
 
+app.use("/personal", CadPersonalRoutes);
+app.use("/aluno", CadAlunoRoutes);
 
 app.listen(PORT, () => {
     console.log(`O servidor está rodando na porta ${PORT}`);
