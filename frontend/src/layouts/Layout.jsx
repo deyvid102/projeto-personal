@@ -2,12 +2,13 @@ import { Outlet } from "react-router-dom";
 import Sidebar from "../components/Sidebar";
 import BottomNav from "../components/BottomNav";
 
-export default function Layout() {
+export default function Layout({ onLogout }) {
   return (
     <div className="min-h-screen bg-gray-100">
       {/* Desktop */}
       <div className="hidden md:flex">
-        <Sidebar />
+        <Sidebar onLogout={onLogout} />
+
         <main className="flex-1 p-6">
           <Outlet />
         </main>
@@ -18,7 +19,8 @@ export default function Layout() {
         <main className="p-4">
           <Outlet />
         </main>
-        <BottomNav />
+
+        <BottomNav onLogout={onLogout} />
       </div>
     </div>
   );

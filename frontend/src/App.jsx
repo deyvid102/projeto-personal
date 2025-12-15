@@ -1,5 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 import Layout from "./layouts/Layout";
 import Login from "./pages/Login";
@@ -11,7 +11,29 @@ import TreinoDetalhe from "./pages/TreinoDetalhe";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [userId, setUserId] = useState(null); // armazenar _id do usuário
+  const [userId, setUserId] = useState(null);
+
+  // restaura sessão
+  useEffect(() => {
+    const storedUserId = localStorage.getItem("userId");
+
+    if (storedUserId) {
+      setIsAuthenticated(true);
+      setUserId(storedUserId);
+    }
+  }, []);
+
+  function handleLogin(user) {
+    localStorage.setItem("userId", user._id);
+    setIsAuthenticated(true);
+    setUserId(user._id);
+  }
+
+  function handleLogout() {
+    localStorage.removeItem("userId");
+    setIsAuthenticated(false);
+    setUserId(null);
+  }
 
   return (
     <BrowserRouter>
@@ -24,12 +46,7 @@ function App() {
             isAuthenticated ? (
               <Navigate to={`/${userId}`} />
             ) : (
-              <Login
-                onLogin={(user) => {
-                  setIsAuthenticated(true);
-                  setUserId(user._id);
-                }}
-              />
+              <Login onLogin={handleLogin} />
             )
           }
         />
@@ -47,12 +64,8 @@ function App() {
 
         {/* ROTAS PRIVADAS */}
         {isAuthenticated ? (
-          <Route element={<Layout />}>
-            
-            {/* Dashboard do personal */}
+          <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/:id" element={<Dashboard />} />
-
-            {/* Rota dinâmica para alunos do personal */}
             <Route path="/:id/alunos" element={<Alunos />} />
             <Route path="/:id/alunos/:alunoId" element={<AlunoDetalhe />} />
             <Route

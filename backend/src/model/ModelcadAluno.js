@@ -15,7 +15,8 @@ const CadAlunoSchema = new mongoose.Schema({
 
     sexo: {
         type: String,
-        enum: ["M", "F", ""],
+        enum: ["M", "F"],
+        default: ""
     },
     status: {
         type: String,

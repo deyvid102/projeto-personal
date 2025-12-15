@@ -34,7 +34,6 @@ export default function Alunos() {
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-2xl font-bold mb-6">Alunos</h1>
 
-        {/* Botão maior só aparece se o botão menor não estiver visível */}
         {!(alunos.length === 0 && !mostrarModal) && (
           <button
             onClick={() => setMostrarModal(true)}
@@ -65,13 +64,15 @@ export default function Alunos() {
             onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
             className="bg-white p-4 rounded-xl shadow cursor-pointer hover:bg-gray-50"
           >
-            <p className="font-semibold">{aluno.nome}</p>
+            <p className="font-semibold">{aluno.nome},{aluno. idade}</p>
             <p className="text-sm text-gray-500">
-              Objetivo:
-              {aluno.objetivo === "1" && " Hipertrofia"}
-              {aluno.objetivo === "2" && " Definição"}
-              {aluno.objetivo === "3" && " Emagrecimento"}
-            </p>
+            Objetivo:{" "}
+            {{
+              hipertrofia: "Hipertrofia",
+              definicao: "Definição",
+              emagrecimento: "Emagrecimento",
+            }[aluno.objetivo] || aluno.objetivo}
+          </p>
           </div>
         ))}
       </div>

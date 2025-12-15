@@ -16,7 +16,8 @@ const CadPersonalSchema = new mongoose.Schema({
     },
     sexo: {
         type: String,
-        enum: ["MASC", "FEM"],
+        enum: ["M", "F"],
+        default: ""
     },
     status: {
         type: String,
