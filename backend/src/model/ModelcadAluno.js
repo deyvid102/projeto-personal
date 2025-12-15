@@ -15,18 +15,17 @@ const CadAlunoSchema = new mongoose.Schema({
 
     sexo: {
         type: String,
-        enum: ["M", "F", "N/A"],
-        required: true
-}
-    
-   /*
+        enum: ["M", "F", ""],
+    },
+    status: {
+        type: String,
+        enum: ['A', 'C', 'S'],
+    },
     // FK: cada usuário pode ter um personal atribuído
     fk_personal: {
         type: mongoose.Schema.Types.ObjectId,
         ref: "CadPersonalSchema",
-        required: false
     }
-    */
 
 });
 

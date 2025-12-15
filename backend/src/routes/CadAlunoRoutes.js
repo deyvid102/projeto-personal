@@ -9,10 +9,19 @@ import {
 
 const router = express.Router();
 
-router.post("/", criarAluno);
+// GET principal
 router.get("/", listarAluno);
+
+// POST
+router.post("/", criarAluno);
+
+// GET por ID
 router.get("/:id", listarAlunoPorId);
+
+// PUT
 router.put("/:id", atualizarAluno);
+
+// DELETE
 router.delete("/:id", excluirAluno);
 
 export default router;

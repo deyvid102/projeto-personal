@@ -31,7 +31,7 @@ const connectDB = async () => {
 connectDB();
 
 app.use("/personal", CadPersonalRoutes);
-app.use("/aluno", CadAlunoRoutes);
+app.use("/alunos", CadAlunoRoutes);
 
 app.listen(PORT, () => {
     console.log(`O servidor está rodando na porta ${PORT}`);

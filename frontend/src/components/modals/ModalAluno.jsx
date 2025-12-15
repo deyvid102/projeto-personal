@@ -1,53 +1,84 @@
 import { useState } from "react";
 
-export default function ModalAluno({ onClose }) {
-  const [formData, setForm] = useState({
+export default function ModalAluno({ onClose, onSave }) {
+  const [formData, setFormData] = useState({
     nome: "",
     idade: "",
     objetivo: "",
     sexo: ""
   });
 
+  const [alert, setAlert] = useState({ message: "", type: "" }); // tipo: "success" ou "error"
+
   function handleChange(e) {
-    const { name, value } = e.target;
-    setForm((prev) => ({
+    const { name, value, type } = e.target;
+
+    setFormData((prev) => ({
       ...prev,
-      [name]: value
+      [name]: type === "number" ? Number(value) : value
     }));
   }
 
+  const showAlert = (message, type = "success") => {
+    setAlert({ message, type });
+    setTimeout(() => setAlert({ message: "", type: "" }), 3000); // some após 3s
+  };
+
   const handleSave = async () => {
     // validação básica
-    if (!formData.nome || !formData.idade || !formData.objetivo) {
-      alert("Preencha todos os campos obrigatórios");
+    if (!formData.nome || !formData.idade || !formData.objetivo || !formData.sexo) {
+      showAlert("Preencha todos os campos obrigatórios", "error");
       return;
     }
 
+    const personalId = localStorage.getItem("userId");
+    const alunoComPersonal = { ...formData, fk_personal: personalId };
+
     try {
-      const response = await fetch("http://localhost:3000/aluno", {
+      const response = await fetch("http://localhost:3000/alunos", {
         method: "POST",
-        headers: {
-          "Content-Type": "application/json"
-        },
-        body: JSON.stringify(formData)
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(alunoComPersonal)
       });
 
-      const data = await response.json();
-      console.log("Resposta:", data);
+      if (!response.ok) {
+        throw new Error("Erro ao criar aluno");
+      }
 
-      onClose(); // fecha o modal após salvar
+      const data = await response.json();
+      console.log("Aluno criado:", data);
+
+      if (onSave) onSave(data);
+
+      showAlert("Aluno criado com sucesso!", "success");
+
+      setTimeout(() => {
+        onClose(); // fecha modal após 0,5s
+      }, 500);
+
     } catch (error) {
-      console.error("Erro ao enviar:", error);
+      console.error(error);
+      showAlert("Erro ao criar aluno", "error");
     }
   };
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6">
+      <div className="bg-white rounded-xl w-full max-w-md p-6 relative">
         <h2 className="text-xl font-bold mb-4">Novo aluno</h2>
 
+        {/* ALERT */}
+        {alert.message && (
+          <div
+            className={`absolute top-4 left-1/2 transform -translate-x-1/2 px-4 py-2 rounded ${
+              alert.type === "success" ? "bg-green-500 text-white" : "bg-red-500 text-white"
+            }`}
+          >
+            {alert.message}
+          </div>
+        )}
+
         <div className="space-y-4">
-          {/* Nome */}
           <input
             type="text"
             name="nome"
@@ -56,8 +87,6 @@ export default function ModalAluno({ onClose }) {
             onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2"
           />
-
-          {/* Idade */}
           <input
             type="number"
             min="1"
@@ -67,36 +96,28 @@ export default function ModalAluno({ onClose }) {
             onChange={handleChange}
             className="w-full border rounded-lg px-3 py-2"
           />
-
-          {/* Objetivo */}
           <select
             name="objetivo"
             className="form-select w-full border rounded-lg px-3 py-2"
             value={formData.objetivo}
             onChange={handleChange}
           >
-            <option value="" disabled hidden>
-              Objetivo
-            </option>
+            <option value="" disabled hidden>Objetivo</option>
             <option value="1">Hipertrofia</option>
             <option value="2">Definição</option>
             <option value="3">Emagrecimento</option>
           </select>
-
-          {/* Sexo */}
           <select
             name="sexo"
             className="form-select w-full border rounded-lg px-3 py-2"
             value={formData.sexo}
             onChange={handleChange}
           >
-            <option value="" disabled hidden>
-              Sexo
-            </option>
+            <option value="" disabled hidden>Sexo</option>
             <option value="M">Masculino</option>
             <option value="F">Feminino</option>
+            <option value="">Prefiro não dizer</option>
           </select>
-
         </div>
 
         <div className="flex justify-end gap-2 mt-6">

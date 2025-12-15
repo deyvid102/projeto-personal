@@ -4,19 +4,21 @@ import ModelcadAluno from "../model/ModelcadAluno.js";
 export const criarAluno = async (req, res) => {
     try {
         const novo = await ModelcadAluno.create(req.body);
-        res.json(novo);
+        res.status(201).json(novo);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ error: error.message });
     }
 };
 
-// READ
+// READ - listar alunos (opcionalmente filtrando por personal)
 export const listarAluno = async (req, res) => {
     try {
-        const lista = await ModelcadAluno.find();
-        res.json(lista);
+        const { fk_personal } = req.query;
+        const filtro = fk_personal ? { fk_personal } : {};
+        const alunos = await ModelcadAluno.find(filtro);
+        res.status(200).json(alunos);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -27,9 +29,9 @@ export const listarAlunoPorId = async (req, res) => {
         if (!aluno) {
             return res.status(404).json({ message: "Aluno não encontrado" });
         }
-        res.json(aluno);
+        res.status(200).json(aluno);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -41,9 +43,9 @@ export const atualizarAluno = async (req, res) => {
             req.body,
             { new: true }
         );
-        res.json(atualizado);
+        res.status(200).json(atualizado);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ error: error.message });
     }
 };
 
@@ -51,8 +53,8 @@ export const atualizarAluno = async (req, res) => {
 export const excluirAluno = async (req, res) => {
     try {
         const excluido = await ModelcadAluno.findByIdAndDelete(req.params.id);
-        res.json(excluido);
+        res.status(200).json(excluido);
     } catch (error) {
-        res.status(500).json({ error });
+        res.status(500).json({ error: error.message });
     }
 };
