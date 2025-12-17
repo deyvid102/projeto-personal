@@ -20,7 +20,7 @@ export default function Login({ onLogin }) {
   setSubmitting(true);
 
   try {
-    const response = await fetch("http://localhost:3000/personal");
+    const response = await fetch("http://10.0.0.121:3000/personal");
     if (!response.ok) throw new Error("Erro ao buscar usuários");
 
     const usuarios = await response.json();
@@ -110,7 +110,7 @@ export default function Login({ onLogin }) {
               </span>
               <Link
                 to="/register"
-                className="ml-1 text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4"
+                className="ml-1 text-blue-600 hover:text-blue-700 font-semibold underline underline-offset-4 "
               >
                 Registrar
               </Link>

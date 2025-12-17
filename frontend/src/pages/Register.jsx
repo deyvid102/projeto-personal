@@ -38,7 +38,7 @@ export default function Register() {
 
   try {
     // BUSCA USUARIOS EXISTENTES
-    const checkResponse = await fetch("http://localhost:3000/personal");
+    const checkResponse = await fetch("http://10.0.0.121:3000/personal");
 
     if (!checkResponse.ok) {
       throw new Error("Erro ao validar email");

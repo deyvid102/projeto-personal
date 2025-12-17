@@ -39,16 +39,6 @@ function App() {
     <BrowserRouter>
       <Routes>
 
-        {/* ROTA INICIAL */}
-        <Route
-          path="/"
-          element={
-            isAuthenticated
-              ? <Navigate to={`/${userId}`} />
-              : <Navigate to="/login" />
-          }
-        />
-
         {/* ROTAS PÚBLICAS */}
         <Route
           path="/login"
