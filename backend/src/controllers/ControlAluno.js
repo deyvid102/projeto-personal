@@ -1,9 +1,9 @@
-import ModelcadAluno from "../model/ModelcadAluno.js";
+import Aluno from "../model/ModelAluno.js";
 
 // CREATE
 export const criarAluno = async (req, res) => {
     try {
-        const novo = await ModelcadAluno.create(req.body);
+        const novo = await Aluno.create(req.body);
         res.status(201).json(novo);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -15,7 +15,7 @@ export const listarAluno = async (req, res) => {
     try {
         const { fk_personal } = req.query;
         const filtro = fk_personal ? { fk_personal } : {};
-        const alunos = await ModelcadAluno.find(filtro);
+        const alunos = await Aluno.find(filtro);
         res.status(200).json(alunos);
     } catch (error) {
         res.status(500).json({ error: error.message });
@@ -25,7 +25,7 @@ export const listarAluno = async (req, res) => {
 // READ - buscar por ID
 export const listarAlunoPorId = async (req, res) => {
     try {
-        const aluno = await ModelcadAluno.findById(req.params.id);
+        const aluno = await Aluno.findById(req.params.id);
         if (!aluno) {
             return res.status(404).json({ message: "Aluno não encontrado" });
         }
@@ -38,7 +38,7 @@ export const listarAlunoPorId = async (req, res) => {
 // UPDATE
 export const atualizarAluno = async (req, res) => {
     try {
-        const atualizado = await ModelcadAluno.findByIdAndUpdate(
+        const atualizado = await Aluno.findByIdAndUpdate(
             req.params.id,
             req.body,
             { new: true }
@@ -52,7 +52,7 @@ export const atualizarAluno = async (req, res) => {
 // DELETE
 export const excluirAluno = async (req, res) => {
     try {
-        const excluido = await ModelcadAluno.findByIdAndDelete(req.params.id);
+        const excluido = await Aluno.findByIdAndDelete(req.params.id);
         res.status(200).json(excluido);
     } catch (error) {
         res.status(500).json({ error: error.message });

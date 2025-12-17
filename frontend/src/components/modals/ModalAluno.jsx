@@ -2,13 +2,13 @@ import { useState } from "react";
 import Alert from "../Alert";
 import { useAlert } from "../hooks/useAlert";
 
-export default function ModalAluno({ onClose, onSave }) {
+export default function ModalAluno({ onClose, onSave, aluno }) {
   const [formData, setFormData] = useState({
-    nome: "",
-    idade: "",
-    objetivo: "",
-    sexo: "",
-  });
+  nome: aluno?.nome || "",
+  idade: aluno?.idade || "",
+  objetivo: aluno?.objetivo || "",
+  sexo: aluno?.sexo || "",
+});
 
   // objetivo personalizado
   const [objetivoCustom, setObjetivoCustom] = useState("");
@@ -25,56 +25,59 @@ export default function ModalAluno({ onClose, onSave }) {
   }
 
   const handleSave = async () => {
-    const objetivoFinal =
-      formData.objetivo === "outro"
-        ? objetivoCustom.trim()
-        : formData.objetivo;
+  const objetivoFinal =
+    formData.objetivo === "outro"
+      ? objetivoCustom.trim()
+      : formData.objetivo;
 
-    // validação básica
-    if (
-      !formData.nome ||
-      !formData.idade ||
-      !objetivoFinal ||
-      !formData.sexo
-    ) {
-      showAlert("Preencha todos os campos obrigatórios", "error");
-      return;
-    }
+  if (!formData.nome || !formData.idade || !objetivoFinal || !formData.sexo) {
+    showAlert("Preencha todos os campos obrigatórios", "error");
+    return;
+  }
 
-    const personalId = localStorage.getItem("userId");
+  const personalId = localStorage.getItem("userId");
 
-    const alunoComPersonal = {
-      ...formData,
-      objetivo: objetivoFinal,
-      fk_personal: personalId,
-    };
-
-    try {
-      const response = await fetch("http://localhost:3000/alunos", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(alunoComPersonal),
-      });
-
-      if (!response.ok) {
-        throw new Error("Erro ao criar aluno");
-      }
-
-      const data = await response.json();
-
-      if (onSave) onSave(data);
-
-      showAlert("Aluno criado com sucesso!", "success");
-
-      setTimeout(() => {
-        onClose();
-      }, 500);
-
-    } catch (error) {
-      console.error(error);
-      showAlert("Erro ao criar aluno", "error");
-    }
+  const payload = {
+    ...formData,
+    objetivo: objetivoFinal,
+    fk_personal: personalId,
   };
+
+  const isEdit = Boolean(aluno?._id);
+
+  const url = isEdit
+    ? `http://localhost:3000/alunos/${aluno._id}`
+    : `http://localhost:3000/alunos`;
+
+  const method = isEdit ? "PUT" : "POST";
+
+  try {
+    const response = await fetch(url, {
+      method,
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(
+        isEdit ? payload : { ...payload, status: "A" }
+      ),
+    });
+
+    if (!response.ok) throw new Error("Erro ao salvar aluno");
+
+    const data = await response.json();
+
+    onSave(data);
+
+    showAlert(
+      isEdit ? "Aluno atualizado com sucesso!" : "Aluno criado com sucesso!",
+      "success"
+    );
+
+    setTimeout(onClose, 500);
+  } catch (error) {
+    console.error(error);
+    showAlert("Erro ao salvar aluno", "error");
+  }
+};
+
 
   return (
     <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
@@ -151,7 +154,7 @@ export default function ModalAluno({ onClose, onSave }) {
 
           <button
             onClick={handleSave}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700"
+            className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700"
           >
             Salvar
           </button>

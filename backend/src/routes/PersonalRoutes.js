@@ -5,7 +5,7 @@ import {
     listarPersonalPorId,
     atualizarPersonal,
     excluirPersonal
-} from "../controllers/ControlcadPersonal.js";
+} from "../controllers/ControlPersonal.js";
 
 const router = express.Router();
 

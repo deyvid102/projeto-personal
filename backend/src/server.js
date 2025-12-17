@@ -3,8 +3,10 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
 
-import CadPersonalRoutes from "./routes/CadPersonalRoutes.js";
-import CadAlunoRoutes from "./routes/CadAlunoRoutes.js"
+import PersonalRoutes from "./routes/PersonalRoutes.js";
+import AlunoRoutes from "./routes/AlunoRoutes.js"
+import TreinoRoutes from "./routes/TreinoRoutes.js"
+import ExercicioRoutes from "./routes/ExercicioRoutes.js"
 
 dotenv.config();
 
@@ -30,8 +32,10 @@ const connectDB = async () => {
 
 connectDB();
 
-app.use("/personal", CadPersonalRoutes);
-app.use("/alunos", CadAlunoRoutes);
+app.use("/personal", PersonalRoutes);
+app.use("/alunos", AlunoRoutes);
+app.use("/treinos", TreinoRoutes);
+app.use("/exercicios", ExercicioRoutes);
 
 app.listen(PORT, () => {
     console.log(`O servidor está rodando na porta ${PORT}`);

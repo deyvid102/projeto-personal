@@ -1,15 +1,29 @@
 import { NavLink } from "react-router-dom";
+import logo from "../images/logo-hpathlet.png";
 
 export default function Sidebar({ onLogout }) {
   const linkBase = "block px-4 py-2 rounded-lg transition";
-  const linkActive = "bg-indigo-50 text-indigo-600 font-semibold";
+  const linkActive = "bg-gray-900 text-gray-50 font-semibold";
 
   const userId = localStorage.getItem("userId");
 
   return (
     <aside className="w-64 bg-white border-r min-h-screen p-6 flex flex-col">
-      <h2 className="text-xl font-bold mb-8">AthletIQ</h2>
-
+      
+     {/* 
+      <NavLink
+          to={`/${userId}`}
+          end
+        >
+           LOGO 
+                <a className="box-content h-32 w-32 ...">
+                  <img
+                    src={logo}
+                    className=""
+                  />
+                </a>
+        </NavLink>
+*/}
       <nav className="space-y-2 flex-1">
         <NavLink
           to={`/${userId}`}

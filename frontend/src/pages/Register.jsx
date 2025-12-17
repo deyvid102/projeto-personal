@@ -4,7 +4,7 @@ import bcrypt from "bcryptjs";
 import Alert from "../components/Alert";
 import { useAlert } from "../components/hooks/useAlert";
 import { Link } from "react-router-dom";
-import logo from "../images/logo-athletiq.png";
+import logo from "../images/logo-hpathlet.png";
 
 export default function Register() {
   const navigate = useNavigate();
@@ -33,6 +33,8 @@ export default function Register() {
   if (submitting) return;
 
   setSubmitting(true);
+
+  const status = "A"; // ← definindo somente quando o botão é clicado
 
   try {
     // BUSCA USUARIOS EXISTENTES
@@ -66,6 +68,7 @@ export default function Register() {
         email,
         senha: senhaHash,
         sexo,
+        status, // agora pega o valor definido aqui dentro
       }),
     });
 
@@ -85,7 +88,6 @@ export default function Register() {
   }
 }
 
-
   return (
     <div className="min-h-screen flex">
       <Alert message={alert.message} type={alert.type} />
@@ -96,15 +98,14 @@ export default function Register() {
 
           {/* LOGO */}
                     <div className="relative">
-            <img
-              src={logo}
-              alt="AthletIQ"
-              className="w-200 object-contain ml-0"
-            />
-          </div>
+                      <img
+                        src={logo}
+                        className="w-100 p--1 object-contain"
+                      />
+                    </div>
           
 
-          <h1 className="text-2xl font-bold text-center mb-6">
+          <h1 className="text-2xl mt-10 font-bold text-center mb-6">
             REGISTRAR
           </h1>
 
@@ -161,6 +162,7 @@ export default function Register() {
                 As senhas não coincidem
               </p>
             )}
+
 
             <button
               type="submit"

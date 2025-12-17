@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Link } from "react-router-dom";
 import bcrypt from "bcryptjs";
-import logo from "../images/logo-athletiq.png";
+import logo from "../images/logo-hpathlet.png";
 
 export default function Login({ onLogin }) {
   const [email, setEmail] = useState("");
@@ -13,40 +13,42 @@ export default function Login({ onLogin }) {
   const botaoDesativado = !email || !emailValido || !senha || submitting;
 
   async function handleLogin(e) {
-    e.preventDefault();
-    if (submitting) return;
+  e.preventDefault();
+  if (submitting) return;
 
-    setErro("");
-    setSubmitting(true);
+  setErro("");
+  setSubmitting(true);
 
-    try {
-      const response = await fetch("http://localhost:3000/personal");
-      if (!response.ok) throw new Error("Erro ao buscar usuários");
+  try {
+    const response = await fetch("http://localhost:3000/personal");
+    if (!response.ok) throw new Error("Erro ao buscar usuários");
 
-      const usuarios = await response.json();
-      const usuario = usuarios.find((u) => u.email === email);
+    const usuarios = await response.json();
 
-      if (!usuario) {
-        setErro("Email ou senha inválidos");
-        setSubmitting(false);
-        return;
-      }
+    // encontra usuário pelo email e verifica se o status é 'A'
+    const usuario = usuarios.find((u) => u.email === email && u.status == 'A');
 
-      const senhaValida = await bcrypt.compare(senha, usuario.senha);
-      if (!senhaValida) {
-        setErro("Email ou senha inválidos");
-        setSubmitting(false);
-        return;
-      }
-
-      localStorage.setItem("userId", usuario._id);
-      onLogin(usuario);
-    } catch (err) {
-      console.error(err);
-      setErro("Erro ao realizar login");
+    if (!usuario) {
+      setErro("Email ou senha inválidos ou usuário não autorizado");
       setSubmitting(false);
+      return;
     }
+
+    const senhaValida = await bcrypt.compare(senha, usuario.senha);
+    if (!senhaValida) {
+      setErro("Email ou senha inválidos");
+      setSubmitting(false);
+      return;
+    }
+
+    localStorage.setItem("userId", usuario._id);
+    onLogin(usuario);
+  } catch (err) {
+    console.error(err);
+    setErro("Erro ao realizar login");
+    setSubmitting(false);
   }
+}
 
   return (
     <div className="min-h-screen flex">
@@ -57,14 +59,13 @@ export default function Login({ onLogin }) {
 
           {/* LOGO */}
           <div className="relative">
-  <img
-    src={logo}
-    alt="AthletIQ"
-    className="w-200 object-contain ml-0"
-  />
-</div>
+            <img
+              src={logo}
+              className="w-100 p--1 object-contain"
+            />
+          </div>
 
-          <h1 className="text-2xl font-bold text-center mb-6">
+          <h1 className="text-2xl mt-10 font-bold text-center mb-6">
             LOGIN
           </h1>
 
@@ -73,7 +74,7 @@ export default function Login({ onLogin }) {
             <input
               type="email"
               placeholder="E-mail"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black-500"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
             />
@@ -84,7 +85,7 @@ export default function Login({ onLogin }) {
             <input
               type="password"
               placeholder="Senha"
-              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+              className="w-full p-3 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-black-500"
               value={senha}
               onChange={(e) => setSenha(e.target.value)}
             />
@@ -97,7 +98,7 @@ export default function Login({ onLogin }) {
               type="submit"
               disabled={botaoDesativado}
               className={`w-full p-3 rounded-md text-white font-semibold transition
-                ${botaoDesativado ? "bg-gray-400 cursor-not-allowed" : "bg-blue-600 hover:bg-blue-700"}`}
+                ${botaoDesativado ? "bg-gray-400 cursor-not-allowed" : "bg-gray-900 hover:bg-gray-600"}`}
             >
               {submitting ? "Entrando..." : "Entrar"}
             </button>

@@ -1,53 +1,46 @@
 import { NavLink } from "react-router-dom";
+import { FaHome, FaUserFriends } from "react-icons/fa";
 
-export default function BottomNav() {
+export default function BottomNav({ onLogout }) {
   const base =
-    "flex flex-col items-center text-xs text-gray-600";
+    "flex flex-col items-center text-xs text-gray-700 transition-colors duration-200";
 
-  const active =
-    "text-indigo-600 font-semibold";
+  const active ="rounded-lg w-12 bg-gray-900 text-white font-bold";
+
+  const userId = localStorage.getItem("userId");
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 bg-white border-t flex justify-around py-2 md:hidden">
+    <nav
+      className="fixed bottom-4 left-4 right-4 bg-gray-200 bg-opacity-80 rounded-2xl flex justify-around p-2 shadow-lg md:hidden"
+    >
       <NavLink
-        to="/"
+        to={`/${userId}/`}
+        end
         className={({ isActive }) =>
-          `${base} ${isActive ? active : ""}`
+          `${base} ${isActive ? active : "hover:bg-gray-300"}`
         }
       >
-        <span>🏠</span>
+        <FaHome size={28} />
         <span>Home</span>
       </NavLink>
 
       <NavLink
-        to="/alunos"
+        to={`/${userId}/alunos`}
         className={({ isActive }) =>
-          `${base} ${isActive ? active : ""}`
+          `${base} ${isActive ? active : "hover:bg-gray-300"}`
         }
       >
-        <span>👥</span>
+        <FaUserFriends size={28} />
         <span>Alunos</span>
       </NavLink>
+      
+      {/* <NavLink to="/treinos" 
+      className={({ isActive }) => ${base} ${isActive ? active : ""} } > 
+      <span>🏋️</span> <span>Treinos</span> </NavLink> <NavLink to="/perfil" 
+      <span>👤</span> <span>Perfil</span> </NavLink> 
+      className={({ isActive }) => ${base} ${isActive ? active : ""} } > 
+       */}
 
-      {/* <NavLink
-        to="/treinos"
-        className={({ isActive }) =>
-          `${base} ${isActive ? active : ""}`
-        }
-      >
-        <span>🏋️</span>
-        <span>Treinos</span>
-      </NavLink>
-
-      <NavLink
-        to="/perfil"
-        className={({ isActive }) =>
-          `${base} ${isActive ? active : ""}`
-        }
-      >
-        <span>👤</span>
-        <span>Perfil</span>
-      </NavLink> */}
     </nav>
   );
 }
