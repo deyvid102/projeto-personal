@@ -68,9 +68,7 @@ function App() {
             <Route path="/:id" element={<Dashboard />} />
             <Route path="/:id/alunos" element={<Alunos />} />
             <Route path="/:id/alunos/:alunoId" element={<AlunoDetalhe />} />
-            <Route
-              path="/:id/alunos/:alunoId/treinos/:treinoId"
-              element={<TreinoDetalhe />}
+            <Route path="/:id/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />}
             />
           </Route>
         ) : (

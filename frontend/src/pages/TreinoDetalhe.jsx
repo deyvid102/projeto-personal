@@ -1,40 +1,46 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useState } from "react";
-import { alunos as alunosMock } from "../data/alunos";
+import { useState, useEffect } from "react";
 import ModalExercicio from "../components/modals/ModalExercicio";
 
 export default function TreinoDetalhe() {
-  const { id, treinoId } = useParams();
+  const { id: personalId, alunoId, treinoId } = useParams();
   const navigate = useNavigate();
 
-  const aluno = alunosMock.find((a) => a.id === id);
-  const treinoInicial = aluno?.treinos.find((t) => t.id === treinoId);
-
-  const [treino, setTreino] = useState(treinoInicial);
+  const [treino, setTreino] = useState(null);
+  const [loading, setLoading] = useState(true)
   const [mostrarModal, setMostrarModal] = useState(false);
 
-  if (!aluno || !treino) {
-    return <p>Treino não encontrado</p>;
-  }
+  useEffect(() => {
+    async function carregarTreino() {
+      try {
+        const res = await fetch(
+          `http://localhost:3000/treinos/${treinoId}`
+        );
 
-  function adicionarExercicio(dados) {
-    setTreino({
-      ...treino,
-      exercicios: [
-        ...treino.exercicios,
-        {
-          id: Date.now().toString(),
-          ...dados,
-        },
-      ],
-    });
-    setMostrarModal(false);
-  }
+        if (!res.ok) throw new Error("Treino não encontrado");
+
+        const data = await res.json();
+        setTreino({
+          ...data, exercicios: data.exercicios || []
+        });
+      } catch (err) {
+        console.error(err);
+        setTreino(null);
+      } finally {
+        setLoading(false);
+      }
+    }
+
+    carregarTreino();
+  }, [treinoId]);
+
+  if (loading) return <p>Carregando treino...</p>;
+  if (!treino) return <p>Treino não encontrado</p>;
 
   return (
     <div>
       <button
-        onClick={() => navigate(`/alunos/${aluno.id}`)}
+        onClick={() => navigate(`/${personalId}/alunos/${alunoId}`)}
         className="text-sm text-indigo-600 mb-4"
       >
         ← Voltar para aluno
@@ -47,7 +53,10 @@ export default function TreinoDetalhe() {
 
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Exercícios</h2>
-        <button onClick={() => setMostrarModal(true)} className="text-sm text-indigo-600">
+        <button
+          onClick={() => setMostrarModal(true)}
+          className="text-sm text-indigo-600"
+        >
           + Adicionar exercício
         </button>
       </div>
@@ -59,22 +68,31 @@ export default function TreinoDetalhe() {
       )}
 
       <div className="grid gap-4">
-        {treino.exercicios.map((ex) => (
+        {treino.exercicios.map((ex, index) => (
           <div
-            key={ex.id}
+            key={index}
             className="bg-white p-4 rounded-xl shadow"
           >
-            <p className="font-semibold">{ex.nome}</p>
+            <p className="font-semibold">{ex.fk_exercicio?.nome || "Exercício"}</p>
             <p className="text-sm text-gray-500">
-              {ex.series}x{ex.repeticoes} • {ex.carga} • Descanso {ex.descanso}
+              {ex.series}x{ex.repeticoes}
+              {ex.carga && ` • ${ex.carga}kg`}
+              {ex.descanso && ` • Descanso ${ex.descanso}s`}
             </p>
           </div>
         ))}
       </div>
+
       {mostrarModal && (
         <ModalExercicio
+          treinoId={treino._id}
           onClose={() => setMostrarModal(false)}
-          onSave={adicionarExercicio}
+          onSave={(novoExercicio) =>
+            setTreino((prev) => ({
+              ...prev,
+              exercicios: [...prev.exercicios, novoExercicio],
+            }))
+          }
         />
       )}
     </div>

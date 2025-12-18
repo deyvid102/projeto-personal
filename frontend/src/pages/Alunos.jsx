@@ -41,7 +41,7 @@ export default function Alunos() {
   useEffect(() => {
     async function buscarAlunos() {
       try {
-        const response = await fetch(`http://10.0.0.121:3000/alunos?fk_personal=${personalId}`);
+        const response = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         if (!response.ok) throw new Error();
         const data = await response.json();
         setAlunos(ordenarAlunos(data));
@@ -57,7 +57,7 @@ export default function Alunos() {
   async function confirmarCancelamento() {
     if (!alunoParaCancelar) return;
     try {
-      const response = await fetch(`http://10.0.0.121:3000/alunos/${alunoParaCancelar._id}`, {
+      const response = await fetch(`http://localhost:3000/alunos/${alunoParaCancelar._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "C" }),
@@ -76,7 +76,7 @@ export default function Alunos() {
   async function deletarAlunoPermanente() {
     if (!alunoParaDeletarPermanente) return;
     try {
-      const response = await fetch(`http://10.0.0.121:3000/alunos/${alunoParaDeletarPermanente._id}`, {
+      const response = await fetch(`http://localhost:3000/alunos/${alunoParaDeletarPermanente._id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error();
