@@ -72,8 +72,8 @@ export default function ModalAluno({ onClose, onSave, onDelete, aluno, showAlert
     try {
       const response = await fetch(
         isEdit
-          ? `http://10.0.0.121:3000/alunos/${aluno._id}`
-          : `http://10.0.0.121:3000/alunos`,
+          ? `http://localhost:3000/alunos/${aluno._id}`
+          : `http://localhost:3000/alunos`,
         {
           method: isEdit ? "PUT" : "POST",
           headers: { "Content-Type": "application/json" },

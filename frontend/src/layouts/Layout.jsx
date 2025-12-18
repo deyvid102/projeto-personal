@@ -1,7 +1,7 @@
 import { Outlet } from "react-router-dom";
-import Sidebar from "../components/Sidebar";
-import BottomNav from "../components/BottomNav";
-import Topbar from "../components/Topbar"; // Importe a Topbar aqui
+import Sidebar from "../components/bars/Sidebar";
+import BottomNav from "../components/bars/BottomNav";
+import Topbar from "../components/bars/Topbar"; // Importe a Topbar aqui
 
 export default function Layout({ onLogout }) {
   return (

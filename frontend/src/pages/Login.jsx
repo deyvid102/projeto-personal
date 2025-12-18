@@ -26,7 +26,7 @@ export default function Login({ onLogin }) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 8000);
 
-      const response = await fetch("http://10.0.0.121:3000/personal", { signal: controller.signal });
+      const response = await fetch("http://localhost:3000/personal", { signal: controller.signal });
       clearTimeout(id);
 
       if (!response.ok) throw new Error("Erro na rede");

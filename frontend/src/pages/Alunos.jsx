@@ -41,7 +41,7 @@ export default function Alunos() {
   useEffect(() => {
     async function buscarAlunos() {
       try {
-        const response = await fetch(`http://10.0.0.121:3000/alunos?fk_personal=${personalId}`);
+        const response = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         if (!response.ok) throw new Error();
         const data = await response.json();
         setAlunos(ordenarAlunos(data));
@@ -57,7 +57,7 @@ export default function Alunos() {
   async function confirmarCancelamento() {
     if (!alunoParaCancelar) return;
     try {
-      const response = await fetch(`http://10.0.0.121:3000/alunos/${alunoParaCancelar._id}`, {
+      const response = await fetch(`http://localhost:3000/alunos/${alunoParaCancelar._id}`, {
         method: "PUT",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ status: "C" }),
@@ -76,7 +76,7 @@ export default function Alunos() {
   async function deletarAlunoPermanente() {
     if (!alunoParaDeletarPermanente) return;
     try {
-      const response = await fetch(`http://10.0.0.121:3000/alunos/${alunoParaDeletarPermanente._id}`, {
+      const response = await fetch(`http://localhost:3000/alunos/${alunoParaDeletarPermanente._id}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error();
@@ -105,7 +105,7 @@ export default function Alunos() {
       <div className="flex justify-between items-end mb-10">
         <div>
           <h1 className="text-3xl font-black text-gray-900 tracking-tighter uppercase">Alunos</h1>
-          <p className="text-gray-400 text-sm font-medium">Lista de atletas e performance</p>
+          <p className="text-gray-400 text-sm font-medium">Lista de alunos</p>
         </div>
         
         {alunos.length > 0 && (
@@ -127,7 +127,7 @@ export default function Alunos() {
             onClick={() => { setAlunoEditando(null); setMostrarModal(true); }}
             className="bg-black text-white px-10 py-4 rounded-2xl font-black shadow-2xl hover:scale-105 transition-transform"
           >
-            CADASTRAR PRIMEIRO ATLETA
+            CADASTRAR PRIMEIRO ALUNO
           </button>
         </div>
       ) : (

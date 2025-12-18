@@ -28,7 +28,7 @@ export default function Register() {
     setSubmitting(true);
 
     try {
-      const checkResponse = await fetch("http://10.0.0.121:3000/personal");
+      const checkResponse = await fetch("http://localhost:3000/personal");
       const usuarios = await checkResponse.json();
       if (usuarios.some((user) => user.email.toLowerCase() === email.toLowerCase())) {
         showAlert("Este e-mail já está cadastrado", "error");
@@ -37,7 +37,7 @@ export default function Register() {
       }
 
       const senhaHash = await bcrypt.hash(senha, 10);
-      const response = await fetch("http://10.0.0.121:3000/personal", {
+      const response = await fetch("http://localhost:3000/personal", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ nome, email, senha: senhaHash, sexo, status: "A" }),

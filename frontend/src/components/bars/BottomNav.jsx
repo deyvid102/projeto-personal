@@ -1,6 +1,6 @@
 import { NavLink } from "react-router-dom";
 import { FaHome, FaUserFriends, FaSignOutAlt } from "react-icons/fa";
-import SlideIn from "../components/SlideIn";
+import SlideIn from "../SlideIn";
 
 export default function BottomNav({ onLogout }) {
   // Estilo base: itens ocupam o mesmo espaço e centralizam conteúdo
