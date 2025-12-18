@@ -212,7 +212,7 @@ export default function Alunos() {
         isOpen={Boolean(alunoParaCancelar)}
         onClose={() => setAlunoParaCancelar(null)}
         onConfirm={confirmarCancelamento}
-        title="SUSPENDER ACESSO?"
+        title="CANCELAR ALUNO?"
         message={`A matrícula de ${alunoParaCancelar?.nome} será marcada como inativa.`}
       />
 

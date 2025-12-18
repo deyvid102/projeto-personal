@@ -14,7 +14,7 @@ export default function Layout({ onLogout }) {
         
         {/* Topbar visível apenas no Desktop (ou se desejar no mobile também) */}
         <div className="hidden md:block">
-          <Topbar />
+          <Topbar onLogout={onLogout}/>
         </div>
 
         {/* Espaçamento superior 'mt-20' para a Topbar no Desktop */}

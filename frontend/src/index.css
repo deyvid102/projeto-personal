@@ -1,14 +1,28 @@
+/* index.css */
 @import "tailwindcss";
 
 html {
+  /* Define a base da fonte para 18px e aplica cores do Tailwind */
+  font-size: 18px; 
   @apply text-gray-900 bg-gray-50;
+  
+  /* MELHORIA VISUAL: Suavização de renderização das fontes */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 body {
   @apply min-h-screen;
-  font-family: 'Oswald', sans-serif;
+  font-family: 'Montserrat', sans-serif;
+  line-height: 1.6;
+  
+  /* Ajuste para a Oswald: ela é muito compacta, 
+     um pequeno espaçamento ajuda a não parecer pixelada */
+  letter-spacing: 0.02em;
 }
 
+/* Animações */
 @keyframes slideIn {
   from {
     opacity: 0;
