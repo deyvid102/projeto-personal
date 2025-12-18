@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
 import SlideIn from "../SlideIn";
+import { FaTrash } from "react-icons/fa";
 
-export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
+export default function ModalAluno({ onClose, onSave, onDelete, aluno, showAlert }) {
   const isEdit = Boolean(aluno?._id);
 
   const [formData, setFormData] = useState({
@@ -42,7 +43,7 @@ export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
     const { name, value, type } = e.target;
     setFormData((prev) => ({
       ...prev,
-      [name]: type === "number" ? Number(value) : value,
+      [name]: type === "number" ? (value === "" ? "" : Number(value)) : value,
     }));
   };
 
@@ -52,14 +53,8 @@ export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
         ? objetivoCustom.trim()
         : formData.objetivo;
 
-    if (
-      !formData.nome ||
-      !formData.idade ||
-      !objetivoFinal ||
-      !formData.sexo ||
-      !formData.status
-    ) {
-      showAlert("Preencha todos os campos obrigatórios", "error");
+    if (!formData.nome.trim()) {
+      showAlert("O campo Nome é obrigatório", "error");
       return;
     }
 
@@ -67,10 +62,10 @@ export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
 
     const payload = {
       nome: formData.nome,
-      idade: formData.idade,
-      objetivo: objetivoFinal,
-      sexo: formData.sexo,
-      status: formData.status, // 🔥 agora sempre válido
+      idade: formData.idade || null,
+      objetivo: objetivoFinal || "",
+      sexo: formData.sexo || "",
+      status: formData.status || "A",
       fk_personal: personalId,
     };
 
@@ -89,7 +84,6 @@ export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
       if (!response.ok) throw new Error();
 
       const data = await response.json();
-
       onSave(data);
       onClose();
 
@@ -106,106 +100,133 @@ export default function ModalAluno({ onClose, onSave, aluno, showAlert }) {
 
   return (
     <div
-      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center"
+      className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4"
       onClick={onClose}
     >
       <SlideIn from="bottom">
         <div
           onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-xl w-full max-w-md p-6 shadow-lg"
+          className="bg-white rounded-2xl w-full max-w-md p-6 shadow-2xl"
         >
-          <h2 className="text-xl font-bold mb-4">
-            {isEdit ? "Editar aluno" : "Novo aluno"}
-          </h2>
+          {/* HEADER COM BOTÃO DE DELETAR PERMANENTE */}
+          <div className="flex justify-between items-start mb-6">
+            <div>
+              <h2 className="text-2xl font-bold text-gray-900">
+                {isEdit ? "Editar aluno" : "Novo aluno"}
+              </h2>
+              <p className="text-sm text-gray-500">
+                {isEdit ? "Atualize as informações do aluno" : "Preencha os dados do novo aluno"}
+              </p>
+            </div>
 
-          <div className="space-y-4">
-            <input
-              name="nome"
-              placeholder="Nome do aluno*"
-              value={formData.nome}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-
-            <input
-              type="number"
-              min="1"
-              name="idade"
-              placeholder="Idade*"
-              value={formData.idade}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            />
-
-            <select
-              name="objetivo"
-              value={formData.objetivo}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              <option value="" disabled>
-                Objetivo*
-              </option>
-              <option value="hipertrofia">Hipertrofia</option>
-              <option value="definicao">Definição</option>
-              <option value="emagrecimento">Emagrecimento</option>
-              <option value="outro">Outro</option>
-            </select>
-
-            {formData.objetivo === "outro" && (
-              <input
-                placeholder="Descreva o objetivo"
-                value={objetivoCustom}
-                onChange={(e) => setObjetivoCustom(e.target.value)}
-                className="w-full border rounded-lg px-3 py-2"
-              />
-            )}
-
-            <select
-              name="sexo"
-              value={formData.sexo}
-              onChange={handleChange}
-              className="w-full border rounded-lg px-3 py-2"
-            >
-              <option value="" disabled>
-                Sexo*
-              </option>
-              <option value="M">Masculino</option>
-              <option value="F">Feminino</option>
-              <option value="N">Prefiro não dizer</option>
-            </select>
-
-            {/* 🔥 STATUS COM CANCELADO (BUG RESOLVIDO) */}
             {isEdit && (
-              <select
-                name="status"
-                value={formData.status}
-                onChange={handleChange}
-                className="w-full border rounded-lg px-3 py-2"
+              <button
+                type="button"
+                onClick={() => onDelete(aluno)}
+                className="flex items-center gap-2 px-3 py-2 text-red-500 hover:bg-red-50 rounded-xl transition-colors group"
+                title="Excluir permanentemente"
               >
-                <option value="" disabled>
-                  Status*
-                </option>
-                <option value="A">Ativo</option>
-                <option value="S">Suspenso</option>
-                <option value="C">Cancelado</option>
-              </select>
+                <FaTrash className="group-hover:scale-110 transition-transform" size={14} />
+                <span className="text-xs font-bold uppercase tracking-wider">Excluir</span>
+              </button>
             )}
           </div>
 
-          <div className="flex justify-end gap-2 mt-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Nome completo</label>
+              <input
+                name="nome"
+                placeholder="Ex: João Silva"
+                value={formData.nome}
+                onChange={handleChange}
+                className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Idade</label>
+                <input
+                  type="number"
+                  name="idade"
+                  placeholder="Idade"
+                  value={formData.idade}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                />
+              </div>
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Sexo</label>
+                <select
+                  name="sexo"
+                  value={formData.sexo}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                >
+                  <option value="">Selecione</option>
+                  <option value="M">Masculino</option>
+                  <option value="F">Feminino</option>
+                  <option value="N">Outro</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label className="text-xs font-bold text-gray-400 uppercase ml-1">Objetivo</label>
+              <select
+                name="objetivo"
+                value={formData.objetivo}
+                onChange={handleChange}
+                className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+              >
+                <option value="" disabled>Escolha o objetivo</option>
+                <option value="hipertrofia">Hipertrofia</option>
+                <option value="definicao">Definição</option>
+                <option value="emagrecimento">Emagrecimento</option>
+                <option value="outro">Outro (personalizado)</option>
+              </select>
+            </div>
+
+            {formData.objetivo === "outro" && (
+              <input
+                placeholder="Qual o objetivo?"
+                value={objetivoCustom}
+                onChange={(e) => setObjetivoCustom(e.target.value)}
+                className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 animate-slideIn"
+              />
+            )}
+
+            {isEdit && (
+              <div>
+                <label className="text-xs font-bold text-gray-400 uppercase ml-1">Status da Matrícula</label>
+                <select
+                  name="status"
+                  value={formData.status}
+                  onChange={handleChange}
+                  className="w-full border border-gray-200 bg-gray-50 rounded-xl px-4 py-3 focus:bg-white focus:ring-2 focus:ring-gray-900 outline-none transition-all"
+                >
+                  <option value="A">Ativo</option>
+                  <option value="S">Suspenso</option>
+                  <option value="C">Cancelado</option>
+                </select>
+              </div>
+            )}
+          </div>
+
+          <div className="flex justify-end gap-3 mt-8">
             <button
               onClick={onClose}
-              className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg"
+              className="px-6 py-3 text-gray-500 font-semibold hover:bg-gray-100 rounded-xl transition-colors"
             >
               Cancelar
             </button>
 
             <button
               onClick={handleSave}
-              className="px-4 py-2 bg-gray-900 text-white rounded-lg hover:bg-gray-700"
+              className="px-8 py-3 bg-gray-900 text-white font-bold rounded-xl hover:bg-gray-800 shadow-lg shadow-gray-200 transition-all active:scale-95"
             >
-              Salvar
+              Salvar Alterações
             </button>
           </div>
         </div>
