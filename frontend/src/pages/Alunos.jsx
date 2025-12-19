@@ -24,9 +24,19 @@ export default function Alunos() {
   const [mostrarPainel, setMostrarPainel] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   
-  // Mudança para Arrays para suportar multi-seleção
-  const [filtrosTemporarios, setFiltrosTemporarios] = useState({ status: [], objetivo: [] });
-  const [filtrosAplicados, setFiltrosAplicados] = useState({ status: [], objetivo: [] });
+  // inicializado com a chave 'ordem'
+  const [filtrosTemporarios, setFiltrosTemporarios] = useState({ 
+    status: [], 
+    objetivo: [], 
+    idade: { min: "", max: "" },
+    ordem: "nome"
+  });
+  const [filtrosAplicados, setFiltrosAplicados] = useState({ 
+    status: [], 
+    objetivo: [], 
+    idade: { min: "", max: "" },
+    ordem: "nome"
+  });
   
   const [busca, setBusca] = useState("");
   const [searchParams] = useSearchParams();
@@ -40,7 +50,7 @@ export default function Alunos() {
   const { currentData, currentPage, totalPages, goToPage, totalItems } = usePagination(alunosFiltrados, 30);
 
   const formatarObjetivo = (texto) => {
-    if (!texto) return "geral";
+    if (!texto) return "GERAL";
     const mapa = {
       "manutencao": "manutenção", "emagrecimento": "emagrecimento",
       "hipertrofia": "hipertrofia", "definicao": "definição",
@@ -55,8 +65,17 @@ export default function Alunos() {
     return labels[code] || code;
   };
 
-  const ordenarAlunos = (lista) => {
-    return [...lista].sort((a, b) => a.nome.localeCompare(b.nome));
+  // função de ordenação flexível
+  const aplicarOrdenacao = (lista, criterio) => {
+    const novaLista = [...lista];
+    if (criterio === "nome") {
+      return novaLista.sort((a, b) => a.nome.localeCompare(b.nome));
+    }
+    if (criterio === "recente") {
+      // assume que o _id do mongodb tem timestamp embutido ou use data_criacao se houver
+      return novaLista.sort((a, b) => b._id.localeCompare(a._id));
+    }
+    return novaLista;
   };
 
   useEffect(() => {
@@ -64,12 +83,13 @@ export default function Alunos() {
       try {
         const resAlunos = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         const dataAlunos = await resAlunos.json();
-        setAlunos(ordenarAlunos(dataAlunos));
+        
+        // carga inicial sempre por nome
+        setAlunos(aplicarOrdenacao(dataAlunos, "nome"));
 
-        // NOVA LÓGICA: Captura status da URL e injeta nos arrays de filtro
         const statusUrl = searchParams.get("status");
         if (statusUrl) {
-          const filtroInicial = { status: [statusUrl], objetivo: [] };
+          const filtroInicial = { status: [statusUrl], objetivo: [], idade: { min: "", max: "" }, ordem: "nome" };
           setFiltrosAplicados(filtroInicial);
           setFiltrosTemporarios(filtroInicial);
         }
@@ -93,10 +113,8 @@ export default function Alunos() {
       }
     }
     buscarDados();
-    // Adicionado searchParams como dependência para reagir ao clique no dashboard
   }, [personalId, searchParams]);
 
-  // Lógica de filtragem atualizada para Arrays (Múltipla escolha)
   useEffect(() => {
     let result = alunos.filter(a => a.nome.toLowerCase().includes(busca.toLowerCase()));
     
@@ -105,10 +123,18 @@ export default function Alunos() {
     }
     
     if (filtrosAplicados.objetivo.length > 0) {
-      result = result.filter(a => filtrosAplicados.objetivo.includes(a.objetivo));
+      result = result.filter(a => filtrosAplicados.objetivo.includes(a.objetivo?.toLowerCase()));
+    }
+
+    if (filtrosAplicados.idade?.min) {
+      result = result.filter(a => (a.idade || 0) >= parseInt(filtrosAplicados.idade.min));
+    }
+    if (filtrosAplicados.idade?.max) {
+      result = result.filter(a => (a.idade || 0) <= parseInt(filtrosAplicados.idade.max));
     }
     
-    setAlunosFiltrados(result);
+    // aplica a ordenação escolhida no painel
+    setAlunosFiltrados(aplicarOrdenacao(result, filtrosAplicados.ordem));
   }, [busca, filtrosAplicados, alunos]);
 
   const handleDeletarAluno = async () => {
@@ -121,6 +147,7 @@ export default function Alunos() {
       setAlunos(alunos.filter((a) => a._id !== alunoParaDeletar._id));
       setMostrarConfirmacao(false);
       setAlunoParaDeletar(null);
+      setAlunoEditando(null);
       showAlert("aluno removido com sucesso", "success");
     } catch {
       showAlert("erro ao excluir aluno", "error");
@@ -128,16 +155,23 @@ export default function Alunos() {
   };
 
   const removerFiltro = (campo, valor) => {
-    const novosFiltros = { 
-      ...filtrosAplicados, 
-      [campo]: filtrosAplicados[campo].filter(v => v !== valor) 
-    };
+    let novosFiltros;
+    if (campo === 'idade') {
+      novosFiltros = { ...filtrosAplicados, idade: { min: "", max: "" } };
+    } else if (campo === 'ordem') {
+      novosFiltros = { ...filtrosAplicados, ordem: "nome" };
+    } else {
+      novosFiltros = { 
+        ...filtrosAplicados, 
+        [campo]: filtrosAplicados[campo].filter(v => v !== valor) 
+      };
+    }
     setFiltrosAplicados(novosFiltros);
-    setFiltrosTemporarios(novosFiltros); // Sincroniza o painel
+    setFiltrosTemporarios(novosFiltros);
   };
 
   const limparTodosFiltros = () => {
-    const reset = { status: [], objetivo: [] };
+    const reset = { status: [], objetivo: [], idade: { min: "", max: "" }, ordem: "nome" };
     setFiltrosAplicados(reset);
     setFiltrosTemporarios(reset);
   };
@@ -157,7 +191,12 @@ export default function Alunos() {
     );
   };
 
-  const hasFiltros = filtrosAplicados.status.length > 0 || filtrosAplicados.objetivo.length > 0;
+  const hasFiltros = 
+    filtrosAplicados.status.length > 0 || 
+    filtrosAplicados.objetivo.length > 0 ||
+    filtrosAplicados.idade?.min !== "" ||
+    filtrosAplicados.idade?.max !== "" ||
+    filtrosAplicados.ordem !== "nome";
 
   if (loading) return null;
 
@@ -169,15 +208,27 @@ export default function Alunos() {
     <div className="w-full pb-20">
       <Alert message={alert.message} type={alert.type} />
 
-      {/* header */}
       <div className="px-4 md:px-0 mt-6 md:mt-12 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
-          <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tighter uppercase italic leading-none mb-1">
-            {primeiroNome} <span className="text-blue-600">{restoNome}</span>
-          </h1>
-          <p className="text-gray-400 font-bold text-[9px] uppercase tracking-widest">
-            {alunosFiltrados.length} alunos encontrados
-          </p>
+          <div className="flex items-center gap-3 mb-1 overflow-visible">
+            <h1 className="inline-block text-2xl md:text-3xl font-[1000] text-gray-900 tracking-[-0.05em] uppercase italic leading-none pr-[10px]">
+              Alunos
+            </h1>
+            <div className="h-6 w-[2px] bg-gray-200 rotate-[20deg] hidden sm:block"></div>
+            <h2 className="inline-block text-xl md:text-3xl font-black tracking-tighter uppercase italic leading-none pr-[20px] -mr-[20px] overflow-visible">
+              <span className="text-gray-400 font-bold">{primeiroNome}</span>{" "}
+              <span className="bg-gradient-to-r from-blue-600 to-blue-500 bg-clip-text text-transparent pb-[2px]">
+                {restoNome}.
+              </span>
+            </h2>
+          </div>
+
+          <div className="flex items-center gap-1.5">
+            <span className="h-1.5 w-1.5 rounded-full bg-blue-600/50"></span>
+            <p className="text-gray-400 font-bold text-[9px] uppercase tracking-[0.2em]">
+              {alunosFiltrados.length} alunos encontrados
+            </p>
+          </div>
         </div>
 
         <div className="flex items-center gap-2 w-full md:w-auto">
@@ -192,7 +243,6 @@ export default function Alunos() {
             />
           </div>
 
-          {/* Botão de Filtro Dinâmico */}
           <button 
             onClick={() => setMostrarPainel(true)} 
             className={`p-3 md:p-3.5 rounded-xl transition-all flex items-center gap-2 ${
@@ -202,9 +252,6 @@ export default function Alunos() {
             }`}
           >
             <FaFilter size={14} />
-            {hasFiltros && (
-              <span className="text-[10px] font-black uppercase hidden"></span>
-            )}
           </button>
 
           <button 
@@ -216,7 +263,6 @@ export default function Alunos() {
         </div>
       </div>
 
-      {/* Etiquetas que só aparecem quando aplicadas */}
       <FiltrosAtivos 
         filtros={filtrosAplicados} 
         removerFiltro={removerFiltro} 
@@ -225,7 +271,6 @@ export default function Alunos() {
         getStatusLabel={getStatusLabel}
       />
 
-      {/* grid */}
       <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5 px-4 md:px-0">
         {currentData.map((aluno) => (
           <div 
@@ -250,7 +295,6 @@ export default function Alunos() {
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} totalItems={totalItems} />
       </div>
 
-      {/* Modals e Painel */}
       {mostrarModal && (
         <ModalAluno
           aluno={alunoEditando}
@@ -258,7 +302,7 @@ export default function Alunos() {
           onClose={() => { setMostrarModal(false); setAlunoEditando(null); }}
           onSave={(alunoSalvo) => {
             const novaLista = alunoEditando ? alunos.map((a) => (a._id === alunoSalvo._id ? alunoSalvo : a)) : [...alunos, alunoSalvo];
-            setAlunos(ordenarAlunos(novaLista));
+            setAlunos(aplicarOrdenacao(novaLista, filtrosAplicados.ordem));
             setMostrarModal(false);
           }}
           onDelete={(aluno) => {
@@ -272,10 +316,18 @@ export default function Alunos() {
       {mostrarConfirmacao && (
         <ModalConfirmacao
           isOpen={mostrarConfirmacao}
-          onClose={() => setMostrarConfirmacao(false)}
           onConfirm={handleDeletarAluno}
+          isCritical={true}
           title="Excluir Aluno"
-          message={`Tem certeza que deseja excluir o aluno ${alunoParaDeletar?.nome}?`}
+          message={
+            <>
+              tem certeza que deseja excluir <span className="text-white font-[1000] underline">permanentemente</span> o aluno {alunoParaDeletar?.nome}?
+            </>
+          }
+          onClose={() => {
+            setMostrarConfirmacao(false);
+            setMostrarModal(true);
+          }}
         />
       )}
       
@@ -283,7 +335,7 @@ export default function Alunos() {
         isOpen={mostrarPainel} 
         onClose={() => setMostrarPainel(false)} 
         onApply={(f) => {
-          setFiltrosAplicados(f); // Aplica e mostra as etiquetas
+          setFiltrosAplicados(f);
           setMostrarPainel(false);
         }} 
         filters={filtrosTemporarios} 
