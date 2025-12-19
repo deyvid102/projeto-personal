@@ -32,7 +32,7 @@ const connectDB = async () => {
 
 connectDB();
 
-app.use("/personal", PersonalRoutes);
+app.use("/personais", PersonalRoutes);
 app.use("/alunos", AlunoRoutes);
 app.use("/treinos", TreinoRoutes);
 app.use("/exercicios", ExercicioRoutes);

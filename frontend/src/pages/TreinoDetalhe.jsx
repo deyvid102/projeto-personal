@@ -53,9 +53,7 @@ export default function TreinoDetalhe() {
 
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-xl font-semibold">Exercícios</h2>
-        <button
-          onClick={() => setMostrarModal(true)}
-          className="text-sm text-indigo-600"
+        <button onClick={() => setMostrarModal(true)} className="text-sm text-indigo-600"
         >
           + Adicionar exercício
         </button>
@@ -76,8 +74,8 @@ export default function TreinoDetalhe() {
             <p className="font-semibold">{ex.fk_exercicio?.nome || "Exercício"}</p>
             <p className="text-sm text-gray-500">
               {ex.series}x{ex.repeticoes}
-              {ex.carga && ` • ${ex.carga}kg`}
-              {ex.descanso && ` • Descanso ${ex.descanso}s`}
+              {ex.carga && ` • ${ex.carga}`}
+              {ex.descanso && ` • Descanso - ${ex.descanso}`}
             </p>
           </div>
         ))}
@@ -85,14 +83,22 @@ export default function TreinoDetalhe() {
 
       {mostrarModal && (
         <ModalExercicio
-          treinoId={treino._id}
+          personalId={personalId}
           onClose={() => setMostrarModal(false)}
-          onSave={(novoExercicio) =>
-            setTreino((prev) => ({
-              ...prev,
-              exercicios: [...prev.exercicios, novoExercicio],
-            }))
-          }
+          onSave={async (novoExercicio) => {
+            const res = await fetch(
+              `http://localhost:3000/treinos/${treino._id}/exercicios`,
+              {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(novoExercicio),
+              }
+            );
+
+            const treinoAtualizado = await res.json();
+            setTreino(treinoAtualizado);
+            setMostrarModal(false);
+          }}
         />
       )}
     </div>

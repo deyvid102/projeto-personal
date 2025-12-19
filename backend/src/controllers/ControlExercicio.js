@@ -4,21 +4,29 @@ import Exercicio from '../model/ModelExercicio.js';
 export async function criarExercicio(req, res) {
   try {
     const exercicio = await Exercicio.create(req.body);
-    res.status(201).json(exercicio);
+    return res.status(201).json(exercicio);
   } catch (err) {
-    res.status(400).json({ error: err.message });
+    return res.status(400).json({ error: err.message });
   }
 }
 
-// LIST
-export async function listarExercicios(req, res) {
+// GET
+export async function listarExerciciosPublicos(req, res) {
+  const exercicios = await Exercicio.find({
+    publico: true 
+  }).sort({ nome: 1 });
+
+  res.json(exercicios);
+}
+
+//GET
+export async function listarExerciciosDoPersonal(req, res) {
   const { personalId } = req.params;
 
   const exercicios = await Exercicio.find({
-    status: 'A',
     $or: [
       { publico: true },
-      { 'criadoPor.id': personalId }
+      { fk_personal: personalId }
     ]
   }).sort({ nome: 1 });
 

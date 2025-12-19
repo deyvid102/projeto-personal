@@ -14,7 +14,7 @@ router.post('/', criarTreino);
 router.get('/aluno/:alunoId', listarTreinosAluno);
 router.get('/:id', buscarTreino);
 router.put('/:id/desativar', desativarTreino);
-router.post('/:treinoId/exercicio', adicionarExercicio);
+router.post('/:treinoId/exercicios', adicionarExercicio);
 router.put('/:treinoId/reordenar', reordenarExercicios);
 
 export default router;

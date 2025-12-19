@@ -54,17 +54,36 @@ export async function desativarTreino(req, res) {
 
 export async function adicionarExercicio(req, res) {
   const { treinoId } = req.params;
+  const {
+    exercicioId,
+    series,
+    repeticoes,
+    carga,
+    descanso,
+    observacoes
+  } = req.body;
 
   const treino = await Treino.findById(treinoId);
   if (!treino) {
     return res.status(404).json({ message: 'Treino não encontrado' });
   }
 
-  treino.exercicios.push(req.body);
+  treino.exercicios.push({
+    fk_exercicio: exercicioId,
+    series: Number(series),
+    repeticoes: Number(repeticoes),
+    carga: carga || null,        
+    descanso: descanso || null,  
+    observacoes,
+    ordem: treino.exercicios.length + 1
+  });
 
   await treino.save();
 
-  res.json(treino);
+  const treinoAtualizado = await Treino.findById(treinoId)
+    .populate('exercicios.fk_exercicio');
+
+  res.json(treinoAtualizado);
 }
 
 export async function reordenarExercicios(req, res) {

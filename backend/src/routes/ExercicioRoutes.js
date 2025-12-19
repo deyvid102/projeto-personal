@@ -1,15 +1,17 @@
-import express from 'express';
+import express from "express";
 import {
-  criarExercicio,
-  listarExercicios,
-  atualizarExercicio,
-  deletarExercicio
-} from '../controllers/ControlExecicio.js';
+    criarExercicio,
+    listarExerciciosPublicos,
+    listarExerciciosDoPersonal,
+    atualizarExercicio,
+    deletarExercicio
+} from "../controllers/ControlExercicio.js";
 
 const router = express.Router();
 
 router.post('/', criarExercicio);
-router.get('/:personalId', listarExercicios);
+router.get('/', listarExerciciosPublicos);
+router.get('/:personalId', listarExerciciosDoPersonal);
 router.put('/:id', atualizarExercicio);
 router.delete('/:id', deletarExercicio);
 

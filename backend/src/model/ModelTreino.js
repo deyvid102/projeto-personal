@@ -8,9 +8,9 @@ const TreinoExercicioSchema = new mongoose.Schema({
   },
   series: { type: Number, required: true },
   repeticoes: { type: Number, required: true },
-  carga: { type: Number },
-  descanso: { type: Number },
-  observacao: { type: String },
+  carga: { type: String },        
+  descanso: { type: String },     
+  observacoes: { type: String },
   ordem: { type: Number, required: true }
 }, { _id: false });
 
