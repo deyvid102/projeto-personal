@@ -1,45 +1,77 @@
 import { NavLink } from "react-router-dom";
-import { FaChartBar, FaUserFriends } from "react-icons/fa";
+import { FaChartBar, FaUserFriends, FaDumbbell, FaRobot, FaSignOutAlt } from "react-icons/fa";
+
+// Importação da logo
+import Logo from "../../assets/HP.png";
 
 export default function Sidebar() {
-  const linkBase = "group flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 ease-in-out mb-2";
-  const linkActive = "bg-black text-white shadow-lg shadow-gray-200 font-bold scale-[1.02]";
-  const linkInactive = "text-gray-600 hover:bg-gray-200 hover:text-gray-900";
+  // estrutura slim: centralizada e compacta
+  const linkBase = "group relative flex flex-col items-center justify-center w-12 h-12 rounded-xl transition-all duration-300 ease-in-out mb-4 mx-auto";
+  const linkActive = "bg-blue-600 text-white shadow-lg shadow-blue-200";
+  const linkInactive = "text-gray-400 hover:bg-gray-100 hover:text-blue-600";
 
   const userId = localStorage.getItem("userId");
 
   return (
-    <aside className="hidden md:flex w-64 bg-gray-200 border-r border-gray-100 min-h-screen p-6 flex-col fixed left-0 top-0 z-50">
+    <aside className="hidden md:flex w-20 bg-white border-r border-gray-100 min-h-screen py-8 flex-col fixed left-0 top-0 z-50">
       
-      <div className="mt-4 flex-1">
-        <nav className="space-y-2">
-          <NavLink
-            to={`/${userId}`}
-            end
-            className={({ isActive }) =>
-              `${linkBase} ${isActive ? linkActive : linkInactive}`
-            }
-          >
-            <FaChartBar size={18} className="transition-transform group-hover:rotate-3" />
-            <span className="tracking-wide">Dashboard</span>
-          </NavLink>
-
-          <NavLink
-            to={`/${userId}/alunos`}
-            className={({ isActive }) =>
-              `${linkBase} ${isActive ? linkActive : linkInactive}`
-            }
-          >
-            <FaUserFriends size={20} className="transition-transform group-hover:rotate-3" />
-            <span className="tracking-wide">Alunos</span>
-          </NavLink>
-        </nav>
+      {/* Logo HQ centralizada */}
+      <div className="flex justify-center mb-10 px-4">
+        <img 
+          src={Logo} 
+          alt="HQ Logo" 
+          className="w-12 h-auto object-contain" 
+        />
       </div>
 
-      <div className="mt-auto pt-6 border-t border-gray-100">
-        <p className="text-[10px] text-gray-500 text-center tracking-tighter uppercase font-bold">
-          HP Athlete v1.0
-        </p>
+      <nav className="flex-1 flex flex-col items-center">
+        <NavLink
+          to={`/${userId}`}
+          end
+          className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}
+        >
+          <FaChartBar size={18} />
+          <span className="absolute left-16 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity uppercase tracking-widest z-50">
+            Dashboard
+          </span>
+        </NavLink>
+
+        <NavLink
+          to={`/${userId}/alunos`}
+          className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}
+        >
+          <FaUserFriends size={20} />
+          <span className="absolute left-16 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity uppercase tracking-widest z-50">
+            Atletas
+          </span>
+        </NavLink>
+
+        <NavLink
+          to={`/${userId}/exercicios`}
+          className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}
+        >
+          <FaDumbbell size={18} />
+          <span className="absolute left-16 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity uppercase tracking-widest z-50">
+            Treinos
+          </span>
+        </NavLink>
+
+        <NavLink
+          to={`/${userId}/ia`}
+          className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}
+        >
+          <FaRobot size={18} />
+          <span className="absolute left-16 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity uppercase tracking-widest z-50">
+            IA Coach
+          </span>
+        </NavLink>
+      </nav>
+
+      {/* footer da sidebar com logout */}
+      <div className="mt-auto flex flex-col items-center gap-6">
+        <button className="text-gray-300 hover:text-red-500 transition-colors p-2">
+          <FaSignOutAlt size={18} />
+        </button>
       </div>
     </aside>
   );

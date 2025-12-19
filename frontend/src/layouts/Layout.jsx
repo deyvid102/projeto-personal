@@ -1,30 +1,35 @@
 import { Outlet } from "react-router-dom";
 import Sidebar from "../components/bars/Sidebar";
 import BottomNav from "../components/bars/BottomNav";
-import Topbar from "../components/bars/Topbar"; // Importe a Topbar aqui
+import Topbar from "../components/bars/Topbar";
 
 export default function Layout({ onLogout }) {
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+    <div className="min-h-screen bg-white flex flex-col md:flex-row">
       
+      {/* sidebar slim (fixa na esquerda no desktop) */}
       <Sidebar onLogout={onLogout} />
 
-      {/* CONTEÚDO PRINCIPAL COM TOPBAR */}
-      <div className="flex-1 flex flex-col md:ml-64 transition-all duration-300">
+      {/* conteúdo principal */}
+      <div className="flex-1 flex flex-col md:ml-20 transition-all duration-300">
         
-        {/* Topbar visível apenas no Desktop (ou se desejar no mobile também) */}
-        <div className="hidden md:block">
+        {/* topbar fixa no topo ou acompanhando o scroll */}
+        <div className="hidden md:block sticky top-0 z-40">
           <Topbar onLogout={onLogout}/>
         </div>
 
-        {/* Espaçamento superior 'mt-20' para a Topbar no Desktop */}
-        <main className="flex-1 p-4 md:p-8 md:mt-20 pb-20 md:pb-8">
-          <div className="max-w-7xl mx-auto">
+        {/* - p-4/p-8: respiro lateral
+            - pb-24: espaço para a bottom nav no mobile
+            - sem max-w: permite expansão total da grid de alunos
+        */}
+        <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">
+          <div className="w-full">
             <Outlet />
           </div>
         </main>
       </div>
 
+      {/* navegação mobile */}
       <div className="md:hidden">
         <BottomNav onLogout={onLogout} />
       </div>

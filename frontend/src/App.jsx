@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import Layout from "./layouts/Layout";
 import Login from "./pages/Login";
 import Register from "./pages/Register";
-import Dashboard from "./pages/Tela_Personal";
+import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import AlunoDetalhe from "./pages/AlunoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";

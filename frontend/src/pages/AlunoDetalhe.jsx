@@ -1,100 +1,261 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
 import ModalNovoTreino from "../components/modals/ModalNovoTreino";
+import ModalAluno from "../components/modals/ModalAluno"; // Importado
+import ModalConfirmacao from "../components/modals/ModalConfirmacao"; // Importado
+import StatusDot from "../components/StatusDot";
+import { useAlert } from "../components/hooks/useAlert"; // Importado
+import Alert from "../components/Alert"; // Importado
+import { 
+  FaArrowLeft, 
+  FaPlus, 
+  FaDumbbell, 
+  FaChevronRight, 
+  FaCalendarAlt,
+  FaWhatsapp,
+  FaEdit,
+  FaBullseye 
+} from "react-icons/fa";
 
 export default function AlunoDetalhe() {
   const { id: personalId, alunoId } = useParams();
   const navigate = useNavigate();
+  const { alert, showAlert } = useAlert(2000);
 
   const [aluno, setAluno] = useState(null);
   const [treinos, setTreinos] = useState([]);
   const [loading, setLoading] = useState(true);
+  
+  // Estados para Modais
   const [modalNovoTreino, setModalNovoTreino] = useState(false);
+  const [mostrarModalEdit, setMostrarModalEdit] = useState(false);
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
-  function handleTreinoCriado(novoTreino) {
-    setTreinos((prev) => [novoTreino, ...prev]);
+  const handleWhatsappClick = () => {
+    if (aluno?.telefone) {
+      const numeroLimpo = aluno.telefone.replace(/\D/g, "");
+      const ddi = numeroLimpo.length <= 11 ? `55${numeroLimpo}` : numeroLimpo;
+      window.open(`https://wa.me/${ddi}`, "_blank");
+    } else {
+      showAlert("telefone não cadastrado", "error");
+    }
+  };
+
+  const renderNomeEstilizado = (nomeCompleto) => {
+    if (!nomeCompleto) return "";
+    const nomes = nomeCompleto.split(" ");
+    if (nomes.length === 1) return nomeCompleto;
+    const primeiro = nomes[0];
+    const resto = nomes.slice(1).join(" ");
+    return (
+      <>
+        {primeiro} <span className="text-blue-500">{resto}</span>
+      </>
+    );
+  };
+
+  // Função para lidar com a exclusão vinda do modal
+  const handleDeletarAluno = async () => {
+    try {
+      const response = await fetch(`http://localhost:3000/alunos/${alunoId}`, {
+        method: "DELETE",
+      });
+      if (!response.ok) throw new Error();
+      navigate(`/${personalId}/alunos`); // Volta para a lista após deletar
+    } catch {
+      showAlert("erro ao excluir aluno", "error");
+    }
+  };
+
+  async function carregarDados() {
+    try {
+      const [resAluno, resTreinos] = await Promise.all([
+        fetch(`http://localhost:3000/alunos/${alunoId}`),
+        fetch(`http://localhost:3000/treinos/aluno/${alunoId}`)
+      ]);
+      if (!resAluno.ok) throw new Error();
+      const alunoData = await resAluno.json();
+      const treinosData = await resTreinos.json();
+      setAluno(alunoData);
+      setTreinos(treinosData);
+    } catch (err) {
+      console.error(err);
+      setAluno(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   useEffect(() => {
-    async function carregarDados() {
-      try {
-        // 🔹 BUSCA ALUNO
-        const resAluno = await fetch(`http://localhost:3000/alunos/${alunoId}`);
-        if (!resAluno.ok) throw new Error("Aluno não encontrado");
-        console.log("status alunoRes:", resAluno.status);
-        const alunoData = await resAluno.json();
-        console.log("alunoData:", alunoData);
-
-        // 🔹 BUSCA TREINOS
-        const resTreinos = await fetch(`http://localhost:3000/treinos/aluno/${alunoId}`);
-        const treinosData = await resTreinos.json();
-
-        setAluno(alunoData);
-        setTreinos(treinosData);
-      } catch (err) {
-        console.error(err);
-        setAluno(null);
-      } finally {
-        setLoading(false);
-      }
-    }
-
     carregarDados();
   }, [alunoId]);
 
-  if (loading) {return <p>Carregando...</p>;}
-  if (!aluno) {return <p>Aluno não encontrado</p>;}
+  if (loading) return (
+    <div className="max-w-5xl mx-auto p-10 pt-32 animate-pulse">
+      <div className="h-4 w-24 bg-gray-200 rounded mb-8" />
+      <div className="h-48 bg-gray-200 rounded-[2rem] mb-10" />
+    </div>
+  );
+
+  if (!aluno) return (
+    <div className="p-20 pt-40 text-center">
+        <p className="font-black uppercase text-gray-400 tracking-widest">aluno não encontrado</p>
+        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 text-xs font-bold uppercase">voltar</button>
+    </div>
+  );
 
   return (
-    <div>
-      <button
-        onClick={() => navigate(`/${personalId}/alunos`)}
-        className="text-sm text-indigo-600 mb-4"
-      >
-        ← Voltar
-      </button>
-
-      <h1 className="text-2xl font-bold">{aluno.nome}</h1>
-      <p className="text-gray-600 mb-6">
-        {aluno.idade} anos • Objetivo: {aluno.objetivo}
-      </p>
-
-      <div className="flex justify-between items-center mb-4">
-        <h2 className="text-xl font-semibold">Treinos</h2>
+    <div className="max-w-5xl mx-auto pb-24 px-4 md:px-6 pt-10"> 
+      <Alert message={alert.message} type={alert.type} />
+      
+      {/* topo com ações rápidas */}
+      <div className="flex justify-between items-center mb-8">
         <button
-          onClick={() => setModalNovoTreino(true)}
-          className="bg-gray-900 text-white px-4 py-2 rounded-lg hover:bg-gray-700"
+          onClick={() => navigate(`/${personalId}/alunos`)}
+          className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-widest transition-colors"
         >
-          + Novo treino
+          <FaArrowLeft size={10} /> voltar para lista
         </button>
+
+        <div className="flex gap-2">
+            <button 
+              onClick={handleWhatsappClick}
+              className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm"
+            >
+                <FaWhatsapp size={14} />
+            </button>
+            <button 
+              onClick={() => setMostrarModalEdit(true)} // Abre o modal de edição
+              className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-black hover:text-white transition-all shadow-sm"
+            >
+                <FaEdit size={14} />
+            </button>
+        </div>
       </div>
 
-      {treinos.length === 0 && (
-        <p className="text-gray-500">
-          Nenhum treino cadastrado.
-        </p>
-      )}
-
-      <div className="grid gap-4">
-        {treinos.map((treino) => (
-          <div
-            key={treino._id}
-            onClick={() => navigate(`/${personalId}/alunos/${alunoId}/treinos/${treino._id}`)}
-            className="bg-white p-4 rounded-xl shadow cursor-pointer hover:bg-gray-50"
-          >
-            <p className="font-semibold">{treino.nome}</p>
-            <p className="text-sm text-gray-500">
-              {treino.exercicios.length} exercícios
-            </p>
+      {/* card de perfil */}
+      <div className="bg-black rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-10 group">
+        <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+          <div className="flex items-center gap-5">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-black italic shadow-lg transform -rotate-2 group-hover:rotate-0 transition-transform">
+              {aluno.nome.charAt(0)}
+            </div>
+            <div className="space-y-1">
+              <div className="flex items-center gap-2 mb-1">
+                <StatusDot status={aluno.status} />
+              </div>
+              <h1 className="text-3xl md:text-4xl font-black tracking-tighter uppercase italic leading-none">
+                {renderNomeEstilizado(aluno.nome)}
+              </h1>
+            </div>
           </div>
-        ))}
+
+          <div className="flex flex-wrap md:flex-nowrap gap-6 md:gap-10 border-t md:border-t-0 md:border-l border-white/10 pt-5 md:pt-0 md:pl-10">
+            <div className="min-w-max">
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                <FaCalendarAlt className="text-blue-500" /> idade
+              </p>
+              <div className="flex items-center gap-3">
+                <p className="text-xl font-black italic">
+                  {aluno.idade || "--"} <span className="text-[10px] not-italic text-gray-400">anos</span>
+                </p>
+              </div>
+            </div>
+            <div className="max-w-xs">
+              <p className="text-[9px] font-black text-gray-500 uppercase tracking-widest flex items-center gap-1.5 mb-1">
+                 <FaBullseye className="text-blue-500" /> objetivo
+              </p>
+              <p className="text-xl font-black italic uppercase text-blue-500 leading-tight">
+                {aluno.objetivo === "definicao" ? "definição" : (aluno.objetivo || "geral")}
+              </p>
+            </div>
+          </div>
+        </div>
       </div>
+
+      {/* seção de treinos */}
+      <div className="space-y-6">
+        <div className="flex justify-between items-end px-1">
+          <div className="space-y-0.5">
+            <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Treinos</h2>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">programação ativa</p>
+          </div>
+          <button
+            onClick={() => setModalNovoTreino(true)}
+            className="bg-gray-100 hover:bg-black hover:text-white text-black px-5 py-3 rounded-xl font-black text-[9px] tracking-widest uppercase transition-all flex items-center gap-2 active:scale-95 shadow-sm"
+          >
+            <FaPlus size={10} /> novo treino
+          </button>
+        </div>
+
+        {treinos.length === 0 ? (
+          <div className="bg-white border-2 border-dashed border-gray-100 rounded-[2.5rem] p-16 text-center">
+            <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mx-auto mb-4">
+                <FaDumbbell size={24} />
+            </div>
+            <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em] mb-4">nenhuma planilha montada.</p>
+            <button onClick={() => setModalNovoTreino(true)} className="text-blue-600 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">criar agora</button>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {treinos.map((treino) => (
+              <div
+                key={treino._id}
+                onClick={() => navigate(`/${personalId}/alunos/${alunoId}/treinos/${treino._id}`)}
+                className="group bg-white p-5 rounded-[2.2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all cursor-pointer flex items-center justify-between"
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 rounded-2xl bg-gray-50 group-hover:bg-blue-600 flex items-center justify-center text-gray-400 group-hover:text-white transition-all duration-300">
+                    <FaDumbbell size={20} />
+                  </div>
+                  <div>
+                    <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{treino.nome}</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{treino.exercicios.length} exercícios na série</p>
+                  </div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-black group-hover:text-white transition-all transform group-hover:translate-x-1">
+                  <FaChevronRight size={10} />
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Modals */}
       {modalNovoTreino && (
         <ModalNovoTreino
           alunoId={alunoId}
           personalId={personalId}
           onClose={() => setModalNovoTreino(false)}
-          onCreated={handleTreinoCriado}
+          onCreated={(novo) => setTreinos([novo, ...treinos])}
+        />
+      )}
+
+      {mostrarModalEdit && (
+        <ModalAluno
+          aluno={aluno}
+          showAlert={showAlert}
+          onClose={() => setMostrarModalEdit(false)}
+          onSave={(alunoSalvo) => {
+            setAluno(alunoSalvo); // Atualiza os dados na tela na hora
+            setMostrarModalEdit(false);
+            showAlert("dados atualizados!", "success");
+          }}
+          onDelete={(aluno) => {
+            setMostrarConfirmacao(true);
+            setMostrarModalEdit(false);
+          }}
+        />
+      )}
+
+      {mostrarConfirmacao && (
+        <ModalConfirmacao
+          isOpen={mostrarConfirmacao}
+          onClose={() => setMostrarConfirmacao(false)}
+          onConfirm={handleDeletarAluno}
+          title="Excluir Aluno"
+          message={`Tem certeza que deseja excluir o aluno ${aluno?.nome}?`}
         />
       )}
     </div>
