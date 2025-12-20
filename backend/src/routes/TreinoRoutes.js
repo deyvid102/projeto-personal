@@ -1,9 +1,10 @@
 import express from 'express';
 import {
   criarTreino,
-  listarTreinosAluno,
+  listarTreinosPorProjeto,
   buscarTreino,
-  desativarTreino,
+  deletarTreino,
+  editarTreino,
   adicionarExercicio,
   reordenarExercicios
 } from '../controllers/ControlTreino.js';
@@ -11,10 +12,11 @@ import {
 const router = express.Router();
 
 router.post('/', criarTreino);
-router.get('/aluno/:alunoId', listarTreinosAluno);
-router.get('/:id', buscarTreino);
-router.put('/:id/desativar', desativarTreino);
 router.post('/:treinoId/exercicios', adicionarExercicio);
-router.put('/:treinoId/reordenar', reordenarExercicios);
+router.get('/projeto/:projetoId', listarTreinosPorProjeto);
+router.get('/:id', buscarTreino);
+router.put('/:treinoId/exercicios/reordenar', reordenarExercicios);
+router.put('/:treinoId', editarTreino);
+router.delete('/:treinoId', deletarTreino);
 
 export default router;

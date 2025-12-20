@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import AlunoDetalhe from "./pages/AlunoDetalhe";
+import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";
 
 function App() {
@@ -68,7 +69,7 @@ function App() {
             <Route path="/:id" element={<Dashboard />} />
             <Route path="/:id/alunos" element={<Alunos />} />
             <Route path="/:id/alunos/:alunoId" element={<AlunoDetalhe />} />
-            <Route path="/:id/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />}
+            <Route path="/:id/alunos/:alunoId/projetos/:projetoId" element={<ProjetoDetalhe />}
             />
           </Route>
         ) : (

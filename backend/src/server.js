@@ -3,18 +3,18 @@ import dotenv from "dotenv";
 import mongoose from "mongoose";
 import cors from "cors";
 
+import './cron/projetoStatus.cron.js';
+
 import PersonalRoutes from "./routes/PersonalRoutes.js";
 import AlunoRoutes from "./routes/AlunoRoutes.js"
 import TreinoRoutes from "./routes/TreinoRoutes.js"
 import ExercicioRoutes from "./routes/ExercicioRoutes.js"
+import ProjetoRoutes from "./routes/ProjetoRoutes.js"
 
 dotenv.config();
 
 const app = express();
-const PORT = 3000;
-
-app.use(express.json());
-
+const PORT = process.env.PORT || 3000;
 
 // Middlewares
 app.use(cors());
@@ -36,6 +36,7 @@ app.use("/personais", PersonalRoutes);
 app.use("/alunos", AlunoRoutes);
 app.use("/treinos", TreinoRoutes);
 app.use("/exercicios", ExercicioRoutes);
+app.use("/projetos", ProjetoRoutes)
 
 app.listen(PORT, () => {
     console.log(`O servidor está rodando na porta ${PORT}`);

@@ -11,7 +11,7 @@ const TreinoExercicioSchema = new mongoose.Schema({
   carga: { type: String },        
   descanso: { type: String },     
   observacoes: { type: String },
-  ordem: { type: Number, required: true }
+  ordem: { type: Number, required: true, min: 1 }
 }, { _id: false });
 
 const TreinoSchema = new mongoose.Schema({
@@ -29,10 +29,10 @@ const TreinoSchema = new mongoose.Schema({
     type: String
   },
 
-  status: {
-    type: String,
-    enum: ['A', 'I', 'S'], // Ativo, Inativo, Suspenso
-    default: 'A'
+  fk_projeto: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Projeto',
+    required: true
   },
 
   // FK → Personal responsável pelo treino
@@ -42,21 +42,10 @@ const TreinoSchema = new mongoose.Schema({
     required: true
   },
 
-  // FK → Aluno dono do treino
-  fk_aluno: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'Aluno',
-    required: true
-  },
-
-  // Datas ajudam MUITO depois
-  data_inicio: {
-    type: Date,
-    default: Date.now
-  },
-
-  data_fim: {
-    type: Date
+  ordem: {
+    type: Number,
+    required: true,
+    min: 1
   },
 
   exercicios: {
@@ -65,5 +54,10 @@ const TreinoSchema = new mongoose.Schema({
   }
 
 }, { timestamps: true });
+
+TreinoSchema.index(
+  { fk_projeto: 1, ordem: 1 },
+  { unique: true }
+);
 
 export default mongoose.model('Treino', TreinoSchema);
