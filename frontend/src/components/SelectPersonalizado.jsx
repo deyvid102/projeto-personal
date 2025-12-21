@@ -29,11 +29,11 @@ export default function SelectPersonalizado({ label, options, value, onChange, p
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-3 bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-bold transition-all ${
+        className={`flex items-center gap-3 bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-light transition-all ${
           isOpen ? "ring-2 ring-blue-600/20 bg-white shadow-sm" : ""
         }`}
       >
-        <span className={selectedOption ? "text-gray-900 uppercase" : "text-gray-400"}>
+        <span className={selectedOption ? "text-gray-400 uppercase" : "text-gray-400"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <FaChevronDown className={`text-gray-300 transition-transform ${isOpen ? "rotate-180" : ""}`} size={10} />

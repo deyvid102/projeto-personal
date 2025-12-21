@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function ModalNovoTreino({
-  projetoId,
+  alunoId,
   personalId,
   onClose,
   onCreated
@@ -31,7 +31,7 @@ export default function ModalNovoTreino({
           nome: form.nome,
           obejtivo:form.objetivo,
           observacoes: form.observacoes,
-          fk_projeto: projetoId,
+          fk_aluno: alunoId,
           fk_personal: personalId,
           status: "A"
         })

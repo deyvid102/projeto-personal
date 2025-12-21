@@ -1,11 +1,11 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState } from "react";
-import ModalAluno from "../components/modals/ModalAluno"; // Importado
-import ModalConfirmacao from "../components/modals/ModalConfirmacao"; // Importado
-import ModalNovoProjeto from "../components/modals/ModalNovoProjeto"
+import ModalNovoTreino from "../components/modals/ModalNovoTreino";
+import ModalAluno from "../components/modals/ModalAluno";
+import ModalConfirmacao from "../components/modals/ModalConfirmacao";
 import StatusDot from "../components/StatusDot";
-import { useAlert } from "../components/hooks/useAlert"; // Importado
-import Alert from "../components/Alert"; // Importado
+import { useAlert } from "../components/hooks/useAlert";
+import Alert from "../components/Alert";
 import { 
   FaArrowLeft, 
   FaPlus, 
@@ -23,21 +23,21 @@ export default function AlunoDetalhe() {
   const { alert, showAlert } = useAlert(2000);
 
   const [aluno, setAluno] = useState(null);
-  const [projetos, setProjetos] = useState([]);
+  const [treinos, setTreinos] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  // Estados para Modais
-  const [modalNovoProjeto, setModalNovoProjeto] = useState(false);
+  const [modalNovoTreino, setModalNovoTreino] = useState(false);
   const [mostrarModalEdit, setMostrarModalEdit] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
 
   const handleWhatsappClick = () => {
-    if (aluno?.telefone) {
-      const numeroLimpo = aluno.telefone.replace(/\D/g, "");
-      const ddi = numeroLimpo.length <= 11 ? `55${numeroLimpo}` : numeroLimpo;
-      window.open(`https://wa.me/${ddi}`, "_blank");
+    if (aluno?.whatsapp) {
+      const numeroLimpo = aluno.whatsapp.replace(/\D/g, "");
+      const ddiLimpo = aluno.ddi ? aluno.ddi.replace(/\D/g, "") : "55";
+      const url = `https://wa.me/${ddiLimpo}${numeroLimpo}`;
+      window.open(url, "_blank");
     } else {
-      showAlert("telefone não cadastrado", "error");
+      showAlert("whatsapp não cadastrado", "error");
     }
   };
 
@@ -54,14 +54,13 @@ export default function AlunoDetalhe() {
     );
   };
 
-  // Função para lidar com a exclusão vinda do modal
   const handleDeletarAluno = async () => {
     try {
       const response = await fetch(`http://localhost:3000/alunos/${alunoId}`, {
         method: "DELETE",
       });
       if (!response.ok) throw new Error();
-      navigate(`/${personalId}/alunos`); // Volta para a lista após deletar
+      navigate(`/${personalId}/alunos`);
     } catch {
       showAlert("erro ao excluir aluno", "error");
     }
@@ -69,15 +68,15 @@ export default function AlunoDetalhe() {
 
   async function carregarDados() {
     try {
-      const [resAluno, resProjetos] = await Promise.all([
+      const [resAluno, resTreinos] = await Promise.all([
         fetch(`http://localhost:3000/alunos/${alunoId}`),
-        fetch(`http://localhost:3000/projetos/aluno/${alunoId}`)
+        fetch(`http://localhost:3000/treinos/aluno/${alunoId}`)
       ]);
       if (!resAluno.ok) throw new Error();
       const alunoData = await resAluno.json();
-      const projetosData = await resProjetos.json();
+      const treinosData = await resTreinos.json();
       setAluno(alunoData);
-      setProjetos(projetosData);
+      setTreinos(treinosData);
     } catch (err) {
       console.error(err);
       setAluno(null);
@@ -108,7 +107,6 @@ export default function AlunoDetalhe() {
     <div className="max-w-5xl mx-auto pb-24 px-4 md:px-6 pt-10"> 
       <Alert message={alert.message} type={alert.type} />
       
-      {/* topo com ações rápidas */}
       <div className="flex justify-between items-center mb-8">
         <button
           onClick={() => navigate(`/${personalId}/alunos`)}
@@ -125,7 +123,7 @@ export default function AlunoDetalhe() {
                 <FaWhatsapp size={14} />
             </button>
             <button 
-              onClick={() => setMostrarModalEdit(true)} // Abre o modal de edição
+              onClick={() => setMostrarModalEdit(true)}
               className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-black hover:text-white transition-all shadow-sm"
             >
                 <FaEdit size={14} />
@@ -133,11 +131,11 @@ export default function AlunoDetalhe() {
         </div>
       </div>
 
-      {/* card de perfil */}
+      {/* Card de Perfil */}
       <div className="bg-black rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-10 group">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
-            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-black italic shadow-lg transform -rotate-2 group-hover:rotate-0 transition-transform">
+            <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-black italic shadow-lg transform -rotate-2 group-hover:rotate-0 transition-transform text-white">
               {aluno.nome.charAt(0)}
             </div>
             <div className="space-y-1">
@@ -173,35 +171,35 @@ export default function AlunoDetalhe() {
         </div>
       </div>
 
-      {/* seção de projetos */}
+      {/* Treinos */}
       <div className="space-y-6">
         <div className="flex justify-between items-end px-1">
           <div className="space-y-0.5">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Projetos</h2>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">Ciclos de treinamento</p>
+            <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Treinos</h2>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">programação ativa</p>
           </div>
           <button
-            onClick={() => setModalNovoProjeto(true)}
+            onClick={() => setModalNovoTreino(true)}
             className="bg-gray-100 hover:bg-black hover:text-white text-black px-5 py-3 rounded-xl font-black text-[9px] tracking-widest uppercase transition-all flex items-center gap-2 active:scale-95 shadow-sm"
           >
-            <FaPlus size={10} /> novo projetos
+            <FaPlus size={10} /> novo treino
           </button>
         </div>
 
-        {projetos.length === 0 ? (
+        {treinos.length === 0 ? (
           <div className="bg-white border-2 border-dashed border-gray-100 rounded-[2.5rem] p-16 text-center">
             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mx-auto mb-4">
                 <FaDumbbell size={24} />
             </div>
             <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em] mb-4">nenhuma planilha montada.</p>
-            <button onClick={() => setModalNovoProjeto(true)} className="text-blue-600 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">criar agora</button>
+            <button onClick={() => setModalNovoTreino(true)} className="text-blue-600 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">criar agora</button>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {projetos.map((projeto) => (
+            {treinos.map((treino) => (
               <div
-                key={projeto._id}
-                onClick={() => navigate(`/${personalId}/alunos/${alunoId}/projetos/${projeto._id}`)}
+                key={treino._id}
+                onClick={() => navigate(`/${personalId}/alunos/${alunoId}/treinos/${treino._id}`)}
                 className="group bg-white p-5 rounded-[2.2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all cursor-pointer flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
@@ -209,8 +207,8 @@ export default function AlunoDetalhe() {
                     <FaDumbbell size={20} />
                   </div>
                   <div>
-                    <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{projeto.nome}</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase">{projeto.status}</p>
+                    <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{treino.nome}</h3>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{treino.exercicios.length} exercícios na série</p>
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-black group-hover:text-white transition-all transform group-hover:translate-x-1">
@@ -222,13 +220,13 @@ export default function AlunoDetalhe() {
         )}
       </div>
 
-      {/* Modals */}
-      {modalNovoProjeto && (
-        <ModalNovoProjeto
+      {/* Modais */}
+      {modalNovoTreino && (
+        <ModalNovoTreino
           alunoId={alunoId}
           personalId={personalId}
-          onClose={() => setModalNovoProjeto(false)}
-          onCreated={(novoProjeto) => setProjetos([novoProjeto, ...projetos])}
+          onClose={() => setModalNovoTreino(false)}
+          onCreated={(novo) => setTreinos([novo, ...treinos])}
         />
       )}
 
@@ -238,11 +236,11 @@ export default function AlunoDetalhe() {
           showAlert={showAlert}
           onClose={() => setMostrarModalEdit(false)}
           onSave={(alunoSalvo) => {
-            setAluno(alunoSalvo); // Atualiza os dados na tela na hora
+            setAluno(alunoSalvo);
             setMostrarModalEdit(false);
             showAlert("dados atualizados!", "success");
           }}
-          onDelete={(aluno) => {
+          onDelete={() => {
             setMostrarConfirmacao(true);
             setMostrarModalEdit(false);
           }}
@@ -252,10 +250,18 @@ export default function AlunoDetalhe() {
       {mostrarConfirmacao && (
         <ModalConfirmacao
           isOpen={mostrarConfirmacao}
-          onClose={() => setMostrarConfirmacao(false)}
           onConfirm={handleDeletarAluno}
+          isCritical={true}
           title="Excluir Aluno"
-          message={`Tem certeza que deseja excluir o aluno ${aluno?.nome}?`}
+          message={
+            <>
+              tem certeza que deseja excluir <span className="text-white font-[1000] underline">permanentemente</span> o aluno {aluno?.nome}?
+            </>
+          }
+          onClose={() => {
+            setMostrarConfirmacao(false);
+            setMostrarModalEdit(true); // Volta para o modal de edição ao fechar
+          }}
         />
       )}
     </div>

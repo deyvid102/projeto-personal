@@ -21,7 +21,7 @@ export default function ModalConfirmacao({ isOpen, onClose, onConfirm, title, me
 
           <div className={`flex border-t ${isCritical ? 'border-red-400' : 'border-gray-100'}`}>
             <button
-              onClick={onClose} // No pai, isso deve reabrir o ModalAluno
+              onClick={onClose}
               className={`flex-1 px-4 py-4 font-black text-[10px] uppercase tracking-widest transition-colors ${
                 isCritical 
                   ? 'text-white hover:bg-red-700' 

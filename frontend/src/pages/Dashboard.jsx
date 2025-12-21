@@ -42,7 +42,7 @@ export default function Dashboard() {
   return (
     <div className="max-w-6xl mx-auto pb-24 px-4 md:px-0">
       
-      {/* header simplificado */}
+      {/* header */}
       <div className="mt-6 md:mt-10 mb-8">
         <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">
           Dashboard
@@ -52,7 +52,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* grid de métricas: cards menores */}
+      {/* grid de métricas com hover colorido */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
         <StatCard 
           title="Total" 
@@ -69,14 +69,14 @@ export default function Dashboard() {
           onClick={() => navigate(`/${personalId}/alunos?status=A`)} 
         />
         <StatCard 
-          title="Pausa" 
+          title="suspensos" 
           value={stats.suspensos} 
           icon={<FaUserClock />} 
           color="orange"
           onClick={() => navigate(`/${personalId}/alunos?status=S`)} 
         />
         <StatCard 
-          title="Off" 
+          title="cancelados" 
           value={stats.cancelados} 
           icon={<FaUserTimes />} 
           color="red"
@@ -92,7 +92,7 @@ export default function Dashboard() {
             <h2 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Recentes</h2>
             <button 
               onClick={() => navigate(`/${personalId}/alunos`)}
-              className="text-[10px] font-black text-blue-600 uppercase tracking-widest"
+              className="text-[10px] font-black text-blue-600 uppercase tracking-widest cursor-pointer hover:underline"
             >
               ver tudo
             </button>
@@ -117,14 +117,17 @@ export default function Dashboard() {
                         {aluno.nome}
                       </h3>
                       <div className="flex items-center gap-2">
+
                         <StatusDot status={aluno.status} />
-                        <span className="text-[8px] font-bold text-gray-400 uppercase">
-                          {aluno.objetivo || "geral"}
+                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
+                          {aluno.objetivo?.toLowerCase() === "definicao" 
+                            ? "definição" 
+                            : (aluno.objetivo || "geral")}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <FaArrowRight size={10} className="text-gray-200" />
+                  <FaArrowRight size={10} className="text-gray-200 group-hover:text-blue-500 transition-colors" />
                 </div>
               ))
             ) : (
@@ -154,7 +157,7 @@ export default function Dashboard() {
               </p>
               <button 
                 onClick={() => navigate(`/${personalId}/exercicios`)}
-                className="w-full bg-white text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 transition-all"
+                className="w-full bg-white text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 transition-all cursor-pointer hover:bg-gray-100"
               >
                 Acessar
               </button>
@@ -169,18 +172,25 @@ export default function Dashboard() {
 
 function StatCard({ title, value, icon, color, onClick }) {
   const colorMap = {
-    blue: "text-blue-600 bg-blue-50/50",
-    green: "text-green-600 bg-green-50/50",
-    orange: "text-orange-500 bg-orange-50/50",
-    red: "text-red-500 bg-red-50/50"
+    blue: "hover:bg-blue-50/80 text-blue-600",
+    green: "hover:bg-green-50/80 text-green-600",
+    orange: "hover:bg-orange-50/80 text-orange-500",
+    red: "hover:bg-red-50/80 text-red-500"
+  };
+
+  const iconBgMap = {
+    blue: "bg-blue-50/50",
+    green: "bg-green-50/50",
+    orange: "bg-orange-50/50",
+    red: "bg-red-50/50"
   };
 
   return (
     <div 
       onClick={onClick}
-      className="bg-white p-3.5 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] border border-gray-100 transition-all active:scale-95 cursor-pointer shadow-sm"
+      className={`bg-white p-3.5 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] border border-gray-100 transition-all active:scale-95 cursor-pointer shadow-sm ${colorMap[color]}`}
     >
-      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center mb-3 ${colorMap[color]}`}>
+      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center mb-3 ${iconBgMap[color]}`}>
         <div className="scale-90">{icon}</div>
       </div>
       <div>

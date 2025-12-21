@@ -53,9 +53,15 @@ export default function Login({ onLogin }) {
       <div className="w-full md:w-1/2 flex items-center justify-center p-8 md:p-12 lg:p-20">
         <div className="w-full max-w-sm">
           
-          {/* logo centralizada e menor */}
           <div className="flex flex-col items-center mb-10 text-center">
-            <img src={logo} alt="HP Athlet" className="w-16 md:w-20 object-contain mb-6" />
+
+             {/* LOGO*/}
+            <img 
+              src={logo} 
+              alt="HP Athlet" 
+              className="w-32 md:w-48 object-contain mb-6" 
+            />
+
             <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">
               Bem-vindo,<br /><span className="text-blue-600">personal.</span>
             </h1>
@@ -128,7 +134,7 @@ export default function Login({ onLogin }) {
                   : "bg-black hover:bg-blue-600 active:scale-95 shadow-blue-900/10"
               }`}
             >
-              {submitting ? <FaSpinner className="animate-spin" size={16} /> : "EFETUAR LOGIN"}
+              {submitting ? <FaSpinner className="animate-spin" size={16} /> : "ENTRAR"}
             </button>
 
             <div className="text-center pt-4">

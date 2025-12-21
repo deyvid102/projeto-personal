@@ -41,10 +41,11 @@ export default function StatusDot({ status }) {
       >
         <span
           className={`
-            text-xs font-semibold
+            text-[10px] font-semibold
             whitespace-nowrap
             opacity-0
             scale-90
+            uppercase
             transition-all duration-200 delay-100
             ${current.text}
 

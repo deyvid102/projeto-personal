@@ -7,17 +7,15 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import AlunoDetalhe from "./pages/AlunoDetalhe";
-import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";
+import Exercicios from "./pages/Exercicios"; // <-- adicione esta importação
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
 
-  // restaura sessão
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
-
     if (storedUserId) {
       setIsAuthenticated(true);
       setUserId(storedUserId);
@@ -39,43 +37,32 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-
-        {/* ROTAS PÚBLICAS */}
+        {/* rotas públicas */}
         <Route
           path="/login"
           element={
-            isAuthenticated ? (
-              <Navigate to={`/${userId}`} />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
+            isAuthenticated ? <Navigate to={`/${userId}`} /> : <Login onLogin={handleLogin} />
           }
         />
-
         <Route
           path="/register"
           element={
-            isAuthenticated ? (
-              <Navigate to={`/${userId}`} />
-            ) : (
-              <Register />
-            )
+            isAuthenticated ? <Navigate to={`/${userId}`} /> : <Register />
           }
         />
 
-        {/* ROTAS PRIVADAS */}
+        {/* rotas privadas */}
         {isAuthenticated ? (
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/:id" element={<Dashboard />} />
             <Route path="/:id/alunos" element={<Alunos />} />
             <Route path="/:id/alunos/:alunoId" element={<AlunoDetalhe />} />
-            <Route path="/:id/alunos/:alunoId/projetos/:projetoId" element={<ProjetoDetalhe />}
-            />
+            <Route path="/:id/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />} />
+            <Route path="/:id/exercicios" element={<Exercicios />} /> {/* <-- rota adicionada */}
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" />} />
         )}
-
       </Routes>
     </BrowserRouter>
   );

@@ -16,10 +16,10 @@ body {
   @apply min-h-screen;
   font-family: 'Montserrat', sans-serif;
   line-height: 1.6;
-  
-  /* Ajuste para a Oswald: ela é muito compacta, 
-     um pequeno espaçamento ajuda a não parecer pixelada */
   letter-spacing: 0.02em;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  text-rendering: optimizeLegibility;
 }
 
 /* Animações */

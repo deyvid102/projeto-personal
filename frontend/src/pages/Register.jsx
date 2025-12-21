@@ -66,9 +66,15 @@ export default function Register() {
       <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-10 overflow-y-auto">
         <div className="w-full max-w-sm py-4">
           
-          {/* logo centralizada e menor - padrão com o login */}
           <div className="flex flex-col items-center mb-8 text-center">
-            <img src={logo} alt="HP Athlet" className="w-16 md:w-20 object-contain mb-6" />
+            
+             {/* LOGO*/}
+            <img 
+              src={logo} 
+              alt="HP Athlet" 
+              className="w-32 md:w-48 object-contain mb-6" 
+            />
+
             <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">
               Junte-se ao<br /><span className="text-blue-600">Time.</span>
             </h1>
@@ -225,7 +231,7 @@ export default function Register() {
         <div className="absolute inset-0 flex flex-col justify-end p-16">
           <div className="space-y-4">
             <span className="bg-blue-600 text-[10px] font-black text-white px-3 py-1 rounded-full uppercase tracking-widest">
-              Join the Squad
+              Entre no time
             </span>
             <h2 className="text-white text-5xl font-black leading-[0.9] tracking-tighter uppercase italic">
               Performance<br />sem limites.
