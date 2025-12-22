@@ -149,8 +149,11 @@ export default function Login({ onLogin }) {
         </div>
       </div>
 
-      <div className="hidden md:block md:w-1/2 relative bg-cover bg-center" 
+       <div className="hidden md:block md:w-1/2 relative bg-cover bg-center" 
+      
            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1517836357463-d25dfeac3438?q=80&w=1470&auto=format&fit=crop')" }}>
+
+
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/20 to-transparent"></div>
         <div className="absolute inset-0 flex flex-col justify-end p-16">
           <div className="space-y-4">

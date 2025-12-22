@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
-import { FaDumbbell, FaClock, FaWeightHanging, FaListOl, FaSearch, FaPlus } from "react-icons/fa";
+import { FaDumbbell, FaClock, FaWeightHanging, FaListOl, FaPlus } from "react-icons/fa";
 import SlideIn from "../SlideIn";
 import SelectPersonalizado from "../SelectPersonalizado";
 
 export default function ModalExercicio({ personalId, onClose, onSave }) {
+  const storedUserId = localStorage.getItem("userId");
+
   const [form, setForm] = useState({
     exercicioId: null,
     nome: "",
@@ -12,6 +14,8 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
     carga: "",
     descanso: "",
     observacoes: "",
+    fk_personal: storedUserId,
+    publico: false,
   });
 
   const [grupo, setGrupo] = useState("");
@@ -19,22 +23,27 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
   const [exercicios, setExercicios] = useState([]);
   const [filtro, setFiltro] = useState([]);
 
-  // busca os exercícios da biblioteca do personal
-  useEffect(() => {
-    async function carregarExercicios() {
-      try {
-        const res = await fetch(`http://localhost:3000/exercicios?fk_personal=${personalId}`);
-        const data = await res.json();
-        setExercicios(data);
-        setFiltro(data);
-      } catch (err) {
-        console.error("erro ao carregar exercícios", err);
-      }
-    }
-    carregarExercicios();
-  }, [personalId]);
+  // carrega exercícios públicos e privados do personal
+  const carregarDados = async () => {
+    try {
+      const res = await fetch(`http://localhost:3000/exercicios`);
+      const data = await res.json();
+      
+      const listaFiltrada = data.filter(ex => 
+        ex.publico === true || ex.publico === "true" || ex.fk_personal === storedUserId
+      );
 
-  // processa os grupos musculares (apenas categorias reais, sem o "todos")
+      setExercicios(listaFiltrada);
+      setFiltro(listaFiltrada);
+    } catch (err) {
+      console.error("erro ao carregar biblioteca", err);
+    }
+  };
+
+  useEffect(() => {
+    carregarDados();
+  }, [storedUserId]);
+
   useEffect(() => {
     const gruposUnicos = [...new Set(exercicios.map((e) => e.grupoMuscular))]
       .filter(Boolean)
@@ -43,7 +52,7 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
     setGrupos(gruposUnicos);
   }, [exercicios]);
 
-  // lógica de filtragem para a busca
+  // filtragem automática em tempo real
   useEffect(() => {
     let lista = exercicios;
     if (grupo) lista = lista.filter((e) => e.grupoMuscular === grupo);
@@ -66,18 +75,19 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
       ...form,
       exercicioId: ex._id,
       nome: ex.nome,
+      fk_personal: storedUserId,
+      publico: false,
     });
-    // opcional: limpa o filtro de grupo ao selecionar um exercício específico
-    setGrupo("");
+    setGrupo(ex.grupoMuscular); 
   };
 
   const handleSave = () => {
-    if (!form.exercicioId) return;
-    onSave({ ...form });
+    if (!form.nome.trim()) return;
+    onSave({ ...form, grupoMuscular: grupo });
     onClose();
   };
 
-  const isInvalido = !form.exercicioId;
+  const isInvalido = !form.nome.trim();
 
   return (
     <div 
@@ -89,35 +99,34 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
           onClick={(e) => e.stopPropagation()} 
           className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl overflow-y-auto max-h-[95vh]"
         >
-          
-          {/* cabeçalho */}
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter italic">
                 novo <span className="text-blue-600">exercício</span>
               </h2>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-1">
-                selecione um movimento da biblioteca
+                monte a ficha de treino
               </p>
             </div>
           </div>
 
           <div className="space-y-4">
-            {/* busca e filtro de grupo */}
             <div className="space-y-2 relative">
               <div className="flex flex-col md:flex-row gap-2">
-                <div className="relative flex-[2]">
+                {/* Campo de Nome */}
+                <div className="relative flex-[1.5]">
                   <input
                     name="nome"
                     value={form.nome}
                     onChange={handleChange}
-                    placeholder="BUSCAR EXERCÍCIO..."
+                    placeholder="NOME DO EXERCÍCIO..."
                     autoComplete="off"
                     className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 pl-10 text-xs font-bold uppercase placeholder:text-gray-300 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
                   />
-                  <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
+                  <FaDumbbell className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
                 </div>
                 
+                {/* Seletor de Grupo Muscular */}
                 <div className="flex-1 font-montserrat text-[11px] font-light">
                   <SelectPersonalizado 
                     options={grupos}
@@ -128,7 +137,7 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
                 </div>
               </div>
 
-              {/* lista de sugestões (dropdown flutuante) */}
+              {/* Lista de sugestões flutuante */}
               {form.nome && filtro.length > 0 && !form.exercicioId && (
                 <div className="absolute z-50 w-full bg-white border border-gray-100 rounded-2xl mt-1 shadow-2xl max-h-52 overflow-y-auto p-2 border-t-4 border-t-blue-600">
                   {filtro.map((ex) => (
@@ -141,9 +150,14 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
                         <span className="text-[11px] font-black text-gray-800 uppercase tracking-tighter group-hover:text-blue-600">
                           {ex.nome}
                         </span>
-                        <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
-                          {ex.grupoMuscular}
-                        </span>
+                        <div className="flex gap-2 items-center">
+                          <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
+                            {ex.grupoMuscular}
+                          </span>
+                          {ex.publico && (
+                            <span className="text-[7px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">Público</span>
+                          )}
+                        </div>
                       </div>
                       <FaPlus size={10} className="text-gray-200 group-hover:text-blue-600" />
                     </div>
@@ -152,7 +166,7 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
               )}
             </div>
 
-            {/* grid de parâmetros técnicos */}
+            {/* Grid de Parâmetros */}
             <div className="grid grid-cols-2 gap-3">
               {[
                 { label: 'séries', name: 'series', icon: FaListOl, placeholder: '0' },
@@ -178,41 +192,30 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
               ))}
             </div>
 
-            {/* campo de observações */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">observações</label>
               <textarea
                 name="observacoes"
                 value={form.observacoes}
                 onChange={handleChange}
-                placeholder="notas adicionais, técnica ou método (ex: drop-set)..."
+                placeholder="notas adicionais..."
                 className="w-full bg-gray-50 border-none rounded-xl p-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-600/20 min-h-[90px] resize-none"
               />
             </div>
           </div>
 
-          {/* footer de ações */}
           <div className="flex flex-col md:flex-row gap-2 mt-8">
-            <button 
-              onClick={onClose} 
-              className="flex-1 order-2 md:order-1 py-3.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 rounded-xl transition-all"
-            >
+            <button onClick={onClose} className="flex-1 order-2 md:order-1 py-3.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 rounded-xl transition-all">
               descartar
             </button>
-            
             <button 
               disabled={isInvalido}
               onClick={handleSave} 
-              className={`flex-[2] order-1 md:order-2 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-                ${isInvalido 
-                  ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none" 
-                  : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"
-                }`}
+              className={`flex-[2] order-1 md:order-2 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isInvalido ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none" : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"}`}
             >
               confirmar exercício
             </button>
           </div>
-
         </div>
       </SlideIn>
     </div>
