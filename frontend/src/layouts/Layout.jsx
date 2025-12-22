@@ -18,10 +18,6 @@ export default function Layout({ onLogout }) {
           <Topbar onLogout={onLogout}/>
         </div>
 
-        {/* - p-4/p-8: respiro lateral
-            - pb-24: espaço para a bottom nav no mobile
-            - sem max-w: permite expansão total da grid de alunos
-        */}
         <main className="flex-1 p-4 md:p-8 pb-24 md:pb-8">
           <div className="w-full">
             <Outlet />

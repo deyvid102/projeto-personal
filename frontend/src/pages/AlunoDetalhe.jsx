@@ -1,6 +1,5 @@
 import { useParams, useNavigate } from "react-router-dom";
-import { useEffect, useState } from "react";
-import ModalNovoTreino from "../components/modals/ModalNovoTreino";
+import { useEffect, useState, useCallback } from "react";
 import ModalAluno from "../components/modals/ModalAluno";
 import ModalConfirmacao from "../components/modals/ModalConfirmacao";
 import StatusDot from "../components/StatusDot";
@@ -8,7 +7,6 @@ import { useAlert } from "../components/hooks/useAlert";
 import Alert from "../components/Alert";
 import { 
   FaArrowLeft, 
-  FaPlus, 
   FaDumbbell, 
   FaChevronRight, 
   FaCalendarAlt,
@@ -18,7 +16,8 @@ import {
 } from "react-icons/fa";
 
 export default function AlunoDetalhe() {
-  const { id: personalId, alunoId } = useParams();
+  // Ajustado para capturar personalId conforme rota do App.jsx
+  const { personalId, alunoId } = useParams();
   const navigate = useNavigate();
   const { alert, showAlert } = useAlert(2000);
 
@@ -26,9 +25,17 @@ export default function AlunoDetalhe() {
   const [treinos, setTreinos] = useState([]);
   const [loading, setLoading] = useState(true);
   
-  const [modalNovoTreino, setModalNovoTreino] = useState(false);
   const [mostrarModalEdit, setMostrarModalEdit] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+
+  const objetivosMap = {
+    hipertrofia: "hipertrofia",
+    emagrecimento: "emagrecimento",
+    definicao: "definição",
+    saude: "saúde",
+    reabilitacao: "reabilitação",
+    manutencao: "manutenção"
+  };
 
   const handleWhatsappClick = () => {
     if (aluno?.whatsapp) {
@@ -43,7 +50,7 @@ export default function AlunoDetalhe() {
 
   const renderNomeEstilizado = (nomeCompleto) => {
     if (!nomeCompleto) return "";
-    const nomes = nomeCompleto.split(" ");
+    const nomes = nomeCompleto.trim().split(/\s+/);
     if (nomes.length === 1) return nomeCompleto;
     const primeiro = nomes[0];
     const resto = nomes.slice(1).join(" ");
@@ -66,28 +73,35 @@ export default function AlunoDetalhe() {
     }
   };
 
-  async function carregarDados() {
+  const carregarDados = useCallback(async () => {
+    // Garante que o alunoId existe antes de disparar o fetch
+    if (!alunoId) return;
+
     try {
+      setLoading(true);
       const [resAluno, resTreinos] = await Promise.all([
         fetch(`http://localhost:3000/alunos/${alunoId}`),
-        fetch(`http://localhost:3000/treinos/aluno/${alunoId}`)
+        fetch(`http://localhost:3000/treinos/${alunoId}`)
       ]);
-      if (!resAluno.ok) throw new Error();
+      
+      if (!resAluno.ok) throw new Error("aluno não encontrado");
+      
       const alunoData = await resAluno.json();
       const treinosData = await resTreinos.json();
+      
       setAluno(alunoData);
-      setTreinos(treinosData);
+      setTreinos(Array.isArray(treinosData) ? treinosData : []);
     } catch (err) {
       console.error(err);
       setAluno(null);
     } finally {
       setLoading(false);
     }
-  }
+  }, [alunoId]);
 
   useEffect(() => {
     carregarDados();
-  }, [alunoId]);
+  }, [carregarDados]);
 
   if (loading) return (
     <div className="max-w-5xl mx-auto p-10 pt-32 animate-pulse">
@@ -99,7 +113,7 @@ export default function AlunoDetalhe() {
   if (!aluno) return (
     <div className="p-20 pt-40 text-center">
         <p className="font-black uppercase text-gray-400 tracking-widest">aluno não encontrado</p>
-        <button onClick={() => navigate(-1)} className="mt-4 text-blue-600 text-xs font-bold uppercase">voltar</button>
+        <button onClick={() => navigate(`/${personalId}/alunos`)} className="mt-4 text-blue-600 text-xs font-bold uppercase underline">voltar para lista</button>
     </div>
   );
 
@@ -118,25 +132,26 @@ export default function AlunoDetalhe() {
         <div className="flex gap-2">
             <button 
               onClick={handleWhatsappClick}
-              className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm"
+              title="contato via whatsapp"
+              className="p-2.5 bg-green-50 text-green-600 rounded-xl hover:bg-green-600 hover:text-white transition-all shadow-sm active:scale-90"
             >
                 <FaWhatsapp size={14} />
             </button>
             <button 
               onClick={() => setMostrarModalEdit(true)}
-              className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-black hover:text-white transition-all shadow-sm"
+              title="editar aluno"
+              className="p-2.5 bg-gray-50 text-gray-600 rounded-xl hover:bg-black hover:text-white transition-all shadow-sm active:scale-90"
             >
                 <FaEdit size={14} />
             </button>
         </div>
       </div>
 
-      {/* Card de Perfil */}
       <div className="bg-black rounded-[2rem] p-6 md:p-8 text-white shadow-xl relative overflow-hidden mb-10 group">
         <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
           <div className="flex items-center gap-5">
             <div className="w-16 h-16 md:w-20 md:h-20 rounded-2xl bg-gradient-to-br from-blue-500 to-blue-700 flex items-center justify-center text-3xl font-black italic shadow-lg transform -rotate-2 group-hover:rotate-0 transition-transform text-white">
-              {aluno.nome.charAt(0)}
+              {aluno.nome.charAt(0).toUpperCase()}
             </div>
             <div className="space-y-1">
               <div className="flex items-center gap-2 mb-1">
@@ -164,26 +179,17 @@ export default function AlunoDetalhe() {
                  <FaBullseye className="text-blue-500" /> objetivo
               </p>
               <p className="text-xl font-black italic uppercase text-blue-500 leading-tight">
-                {aluno.objetivo === "definicao" ? "definição" : (aluno.objetivo || "geral")}
+                {objetivosMap[aluno.objetivo?.toLowerCase()] || aluno.objetivo || "geral"}
               </p>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Treinos */}
       <div className="space-y-6">
-        <div className="flex justify-between items-end px-1">
-          <div className="space-y-0.5">
-            <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Treinos</h2>
-            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">programação ativa</p>
-          </div>
-          <button
-            onClick={() => setModalNovoTreino(true)}
-            className="bg-gray-100 hover:bg-black hover:text-white text-black px-5 py-3 rounded-xl font-black text-[9px] tracking-widest uppercase transition-all flex items-center gap-2 active:scale-95 shadow-sm"
-          >
-            <FaPlus size={10} /> novo treino
-          </button>
+        <div className="space-y-0.5 px-1">
+          <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Treinos</h2>
+          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">programação ativa</p>
         </div>
 
         {treinos.length === 0 ? (
@@ -191,8 +197,7 @@ export default function AlunoDetalhe() {
             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mx-auto mb-4">
                 <FaDumbbell size={24} />
             </div>
-            <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em] mb-4">nenhuma planilha montada.</p>
-            <button onClick={() => setModalNovoTreino(true)} className="text-blue-600 text-[10px] font-black uppercase underline decoration-2 underline-offset-4">criar agora</button>
+            <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em]">nenhuma planilha montada.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -208,7 +213,9 @@ export default function AlunoDetalhe() {
                   </div>
                   <div>
                     <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{treino.nome}</h3>
-                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">{treino.exercicios.length} exercícios na série</p>
+                    <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
+                      {treino.exercicios?.length || 0} exercícios na série
+                    </p>
                   </div>
                 </div>
                 <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center text-gray-300 group-hover:bg-black group-hover:text-white transition-all transform group-hover:translate-x-1">
@@ -219,16 +226,6 @@ export default function AlunoDetalhe() {
           </div>
         )}
       </div>
-
-      {/* Modais */}
-      {modalNovoTreino && (
-        <ModalNovoTreino
-          alunoId={alunoId}
-          personalId={personalId}
-          onClose={() => setModalNovoTreino(false)}
-          onCreated={(novo) => setTreinos([novo, ...treinos])}
-        />
-      )}
 
       {mostrarModalEdit && (
         <ModalAluno
@@ -260,7 +257,7 @@ export default function AlunoDetalhe() {
           }
           onClose={() => {
             setMostrarConfirmacao(false);
-            setMostrarModalEdit(true); // Volta para o modal de edição ao fechar
+            setMostrarModalEdit(true);
           }}
         />
       )}

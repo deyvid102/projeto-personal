@@ -111,14 +111,14 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
                     placeholder="Mín"
                     value={filters.idade?.min || ''}
                     onChange={(e) => handleAgeChange('min', e.target.value)}
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-xs font-bold focus:border-blue-600 outline-none transition-all"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-xs font-light focus:border-blue-600 outline-none transition-all"
                   />
                   <input 
                     type="number"
                     placeholder="Máx"
                     value={filters.idade?.max || ''}
                     onChange={(e) => handleAgeChange('max', e.target.value)}
-                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-xs font-bold focus:border-blue-600 outline-none transition-all"
+                    className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-2.5 text-xs font-light focus:border-blue-600 outline-none transition-all"
                   />
                 </div>
               </div>

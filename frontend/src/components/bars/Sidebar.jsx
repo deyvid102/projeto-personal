@@ -27,7 +27,7 @@ export default function Sidebar() {
         <img 
           src={Logo} 
           alt="HQ Logo" 
-          className="w-12 h-auto object-contain" 
+          className="w-24 h-auto object-contain"
         />
       </div>
 
@@ -44,14 +44,14 @@ export default function Sidebar() {
           </span>
         </NavLink>
 
-        {/* alunos / atletas */}
+        {/* alunos*/}
         <NavLink
           to={`/${userId}/alunos`}
           className={({ isActive }) => `${linkBase} ${isActive ? linkActive : linkInactive}`}
         >
           <FaUserFriends size={20} />
           <span className="absolute left-16 bg-black text-white text-[10px] font-bold px-2 py-1 rounded opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity uppercase tracking-widest z-50 whitespace-nowrap shadow-xl">
-            atletas
+            alunos
           </span>
         </NavLink>
 

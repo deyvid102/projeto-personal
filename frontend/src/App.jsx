@@ -8,11 +8,12 @@ import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import AlunoDetalhe from "./pages/AlunoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";
-import Exercicios from "./pages/Exercicios"; // <-- adicione esta importação
+import Exercicios from "./pages/Exercicios";
 
 function App() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [userId, setUserId] = useState(null);
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const storedUserId = localStorage.getItem("userId");
@@ -20,6 +21,7 @@ function App() {
       setIsAuthenticated(true);
       setUserId(storedUserId);
     }
+    setLoading(false);
   }, []);
 
   function handleLogin(user) {
@@ -34,31 +36,30 @@ function App() {
     setUserId(null);
   }
 
+  if (loading) return null;
+
   return (
     <BrowserRouter>
       <Routes>
-        {/* rotas públicas */}
         <Route
           path="/login"
-          element={
-            isAuthenticated ? <Navigate to={`/${userId}`} /> : <Login onLogin={handleLogin} />
-          }
+          element={isAuthenticated ? <Navigate to={`/${userId}`} /> : <Login onLogin={handleLogin} />}
         />
         <Route
           path="/register"
-          element={
-            isAuthenticated ? <Navigate to={`/${userId}`} /> : <Register />
-          }
+          element={isAuthenticated ? <Navigate to={`/${userId}`} /> : <Register />}
         />
 
-        {/* rotas privadas */}
         {isAuthenticated ? (
           <Route element={<Layout onLogout={handleLogout} />}>
-            <Route path="/:id" element={<Dashboard />} />
-            <Route path="/:id/alunos" element={<Alunos />} />
-            <Route path="/:id/alunos/:alunoId" element={<AlunoDetalhe />} />
-            <Route path="/:id/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />} />
-            <Route path="/:id/exercicios" element={<Exercicios />} /> {/* <-- rota adicionada */}
+            {/* alterado de :id para :personalId para clareza */}
+            <Route path="/:personalId" element={<Dashboard />} />
+            <Route path="/:personalId/alunos" element={<Alunos />} />
+            <Route path="/:personalId/alunos/:alunoId" element={<AlunoDetalhe />} />
+            <Route path="/:personalId/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />} />
+            <Route path="/:personalId/exercicios" element={<Exercicios />} />
+            
+            <Route path="*" element={<Navigate to={`/${userId}`} />} />
           </Route>
         ) : (
           <Route path="*" element={<Navigate to="/login" />} />

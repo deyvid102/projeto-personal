@@ -11,23 +11,33 @@ import {
 } from "react-icons/fa";
 
 export default function Dashboard() {
-  const { id: personalId } = useParams();
+  // CORREÇÃO: Alterado de { id: personalId } para { personalId }
+  // para bater com a rota definida no App.jsx
+  const { personalId } = useParams();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, ativos: 0, suspensos: 0, cancelados: 0, recentes: [] });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     async function fetchDashboardData() {
+      // Verificação de segurança para evitar fetch sem ID
+      if (!personalId) return;
+
       try {
         const response = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         const data = await response.json();
         
-        const ativos = data.filter(a => a.status === 'A').length;
-        const suspensos = data.filter(a => a.status === 'S').length;
-        const cancelados = data.filter(a => a.status === 'C').length;
-        const recentes = [...data].reverse().slice(0, 5);
+        // Se a API retornar erro ou não for array, evita quebra do código
+        const listaAlunos = Array.isArray(data) ? data : [];
 
-        setStats({ total: data.length, ativos, suspensos, cancelados, recentes });
+        const ativos = listaAlunos.filter(a => a.status === 'A').length;
+        const suspensos = listaAlunos.filter(a => a.status === 'S').length;
+        const cancelados = listaAlunos.filter(a => a.status === 'C').length;
+        
+        // Pega os 5 últimos adicionados (assumindo que o ID é cronológico ou usando reverse)
+        const recentes = [...listaAlunos].reverse().slice(0, 5);
+
+        setStats({ total: listaAlunos.length, ativos, suspensos, cancelados, recentes });
       } catch (error) {
         console.error("erro ao carregar dados", error);
       } finally {
@@ -52,7 +62,7 @@ export default function Dashboard() {
         </p>
       </div>
 
-      {/* grid de métricas com hover colorido */}
+      {/* grid de métricas */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
         <StatCard 
           title="Total" 
@@ -110,14 +120,13 @@ export default function Dashboard() {
                 >
                   <div className="flex items-center gap-3">
                     <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center font-black text-gray-400 text-[10px]">
-                      {aluno.nome.charAt(0)}
+                      {aluno.nome?.charAt(0)}
                     </div>
                     <div>
                       <h3 className="font-bold text-gray-900 text-xs uppercase tracking-tight truncate max-w-[150px]">
                         {aluno.nome}
                       </h3>
                       <div className="flex items-center gap-2">
-
                         <StatusDot status={aluno.status} />
                         <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
                           {aluno.objetivo?.toLowerCase() === "definicao" 

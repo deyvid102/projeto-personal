@@ -24,7 +24,6 @@ export default function Alunos() {
   const [mostrarPainel, setMostrarPainel] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   
-  // inicializado com a chave 'ordem'
   const [filtrosTemporarios, setFiltrosTemporarios] = useState({ 
     status: [], 
     objetivo: [], 
@@ -41,7 +40,9 @@ export default function Alunos() {
   const [busca, setBusca] = useState("");
   const [searchParams] = useSearchParams();
   const { alert, showAlert } = useAlert(2000);
-  const { id: personalId } = useParams();
+  
+  // alterado para coincidir com a rota :personalId
+  const { personalId } = useParams(); 
   const navigate = useNavigate();
 
   const [alunoEditando, setAlunoEditando] = useState(null);
@@ -65,14 +66,12 @@ export default function Alunos() {
     return labels[code] || code;
   };
 
-  // função de ordenação flexível
   const aplicarOrdenacao = (lista, criterio) => {
     const novaLista = [...lista];
     if (criterio === "nome") {
       return novaLista.sort((a, b) => a.nome.localeCompare(b.nome));
     }
     if (criterio === "recente") {
-      // assume que o _id do mongodb tem timestamp embutido ou use data_criacao se houver
       return novaLista.sort((a, b) => b._id.localeCompare(a._id));
     }
     return novaLista;
@@ -84,7 +83,6 @@ export default function Alunos() {
         const resAlunos = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         const dataAlunos = await resAlunos.json();
         
-        // carga inicial sempre por nome
         setAlunos(aplicarOrdenacao(dataAlunos, "nome"));
 
         const statusUrl = searchParams.get("status");
@@ -133,7 +131,6 @@ export default function Alunos() {
       result = result.filter(a => (a.idade || 0) <= parseInt(filtrosAplicados.idade.max));
     }
     
-    // aplica a ordenação escolhida no painel
     setAlunosFiltrados(aplicarOrdenacao(result, filtrosAplicados.ordem));
   }, [busca, filtrosAplicados, alunos]);
 
@@ -258,7 +255,7 @@ export default function Alunos() {
             onClick={() => { setAlunoEditando(null); setMostrarModal(true); }} 
             className="bg-black text-white p-3 md:p-3.5 rounded-xl shadow-lg active:scale-95 transition-transform flex items-center justify-center"
           >
-            <FaUserPlus size={16} />
+            <FaUserPlus size={16} cl/>
           </button>
         </div>
       </div>
@@ -275,6 +272,7 @@ export default function Alunos() {
         {currentData.map((aluno) => (
           <div 
             key={aluno._id}
+            // Navegação atualizada para usar personalId correto
             onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
             className={`bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col shadow-sm active:border-blue-600 md:hover:border-blue-600 transition-all cursor-pointer ${aluno.status === 'C' ? 'opacity-50 grayscale' : ''}`}
           >
