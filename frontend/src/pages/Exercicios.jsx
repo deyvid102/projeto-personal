@@ -1,11 +1,10 @@
 import { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom"; // Adicionado useNavigate
 import { FaSearch, FaPlus, FaDumbbell, FaEdit, FaGlobeAmericas } from "react-icons/fa";
 import Alert from "../components/Alert";
 import Pagination from "../components/Pagination";
 import { usePagination } from "../components/hooks/usePagination";
 import { useAlert } from "../components/hooks/useAlert";
-// Importação do Modal
 import ModalExercicio from "../components/modals/ModalExercicio";
 
 export default function Exercicios() {
@@ -15,11 +14,11 @@ export default function Exercicios() {
   const [busca, setBusca] = useState("");
   const [filtroGrupo, setFiltroGrupo] = useState("todos");
 
-  // Estados para controle do Modal
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [exercicioParaEditar, setExercicioParaEditar] = useState(null);
 
   const { personalId } = useParams();
+  const navigate = useNavigate(); // Hook para navegação
   const { alert, showAlert } = useAlert(2000);
 
   const { currentData, currentPage, totalPages, goToPage, totalItems } = usePagination(exerciciosFiltrados, 40);
@@ -74,7 +73,6 @@ export default function Exercicios() {
     <div className="w-full min-h-screen pb-20 md:pl-20 transition-all duration-300 bg-white">
       <Alert message={alert.message} type={alert.type} />
 
-      {/* Renderização Condicional do Modal */}
       {isModalOpen && (
         <ModalExercicio
           isOpen={isModalOpen}
@@ -119,7 +117,6 @@ export default function Exercicios() {
                 className="bg-gray-50 border-none rounded-xl py-2.5 md:py-3 pl-9 md:pl-10 pr-4 text-[11px] font-bold w-full md:w-64 outline-none focus:ring-2 focus:ring-blue-600/10 transition-all"
               />
             </div>
-            {/* Botão Adicionar redirecionando para Modal */}
             <button 
               onClick={() => {
                 setExercicioParaEditar(null);
@@ -153,6 +150,8 @@ export default function Exercicios() {
             currentData.map((ex) => (
               <div
                 key={ex._id}
+                // ROTA ALTERADA: Clica no card para ir aos detalhes
+                onClick={() => navigate(`/${personalId}/exercicios/${ex._id}`)}
                 className={`group bg-white border rounded-2xl p-3.5 flex flex-col shadow-sm active:border-blue-600 md:hover:border-blue-600 transition-all cursor-pointer ${ex.publico ? 'border-blue-100/50 bg-blue-50/5' : 'border-gray-100'}`}
               >
                 <div className="flex justify-between items-start mb-2">
@@ -180,12 +179,13 @@ export default function Exercicios() {
                     <span className={`w-3 h-1 rounded-full ${ex.publico ? 'bg-blue-400' : 'bg-gray-100'}`}></span>
                     <span className="w-1 h-1 bg-gray-100 rounded-full"></span>
                   </div>
-                  {/* Botão Editar redirecionando para Modal */}
                   <button 
                     onClick={(e) => {
-                      e.stopPropagation();
-                      setExercicioParaEditar(ex);
-                      setIsModalOpen(true);
+                      e.stopPropagation(); // Impede o redirecionamento ao clicar em editar
+                      if (!ex.publico) {
+                        setExercicioParaEditar(ex);
+                        setIsModalOpen(true);
+                      }
                     }}
                     className={`transition-colors ${ex.publico ? 'text-blue-100 cursor-not-allowed' : 'text-gray-200 active:text-blue-600 md:hover:text-blue-600'}`}
                   >

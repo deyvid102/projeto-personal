@@ -68,7 +68,7 @@ export default function Alert({ message, type = "success" }) {
 
       {/* Conteúdo */}
       <div className="flex-1 pr-4">
-        <p className="text-sm font-semibold leading-tight">
+        <p className="text-xs font-semibold leading-tight uppercase">
           {message}
         </p>
       </div>

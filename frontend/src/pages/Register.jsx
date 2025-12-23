@@ -60,30 +60,30 @@ export default function Register() {
   }
 
   return (
-    <div className="min-h-screen flex bg-white w-full overflow-hidden font-sans">
+    <div className="h-screen flex bg-white w-full overflow-hidden font-sans">
       <Alert message={alert.message} type={alert.type} />
 
-      <div className="w-full md:w-1/2 flex items-center justify-center p-6 md:p-10 overflow-y-auto">
-        <div className="w-full max-w-sm py-4">
+      {/* LADO ESQUERDO: FORMULÁRIO */}
+      <div className="w-full md:w-1/2 flex items-start justify-center pt-4 md:pt-8 px-8">
+        <div className="w-full max-w-sm">
           
-          <div className="flex flex-col items-center mb-8 text-center">
-            
-             {/* LOGO*/}
+          <div className="flex flex-col items-center mb-4 text-center">
+             {/* LOGO REDUZIDA */}
             <img 
               src={logo} 
               alt="HP Athlet" 
-              className="w-32 md:w-48 object-contain mb-6" 
+              className="w-20 md:w-28 object-contain mb-3" 
             />
 
-            <h1 className="text-2xl md:text-3xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">
+            <h1 className="text-xl md:text-2xl font-black text-gray-900 tracking-tighter italic uppercase leading-tight">
               Junte-se ao<br /><span className="text-blue-600">Time.</span>
             </h1>
-            <p className="text-gray-400 text-[9px] font-bold uppercase tracking-[0.2em] mt-3">
+            <p className="text-gray-400 text-[8px] font-bold uppercase tracking-[0.2em] mt-1.5">
               sua jornada de alta performance
             </p>
           </div>
 
-          <form onSubmit={handleSubmit} className="space-y-3">
+          <form onSubmit={handleSubmit} className="space-y-2">
             <div className="space-y-1 group">
               <label className="text-[8px] font-black text-gray-400 uppercase tracking-widest ml-1 transition-colors group-focus-within:text-black">
                 Nome Completo
@@ -93,7 +93,7 @@ export default function Register() {
                 <input 
                   type="text" 
                   placeholder="ex: joão silva"
-                  className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none transition-all text-[11px] font-bold"
+                  className="w-full p-2.5 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none transition-all text-[11px] font-bold"
                   value={nome} 
                   onChange={(e) => setNome(e.target.value)} 
                   required 
@@ -111,7 +111,7 @@ export default function Register() {
                   <input 
                     type="email" 
                     placeholder="coach@email.com"
-                    className={`w-full p-3 pl-10 bg-gray-50 border ${email && !emailValido ? 'border-red-200' : 'border-gray-100'} rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all`}
+                    className={`w-full p-2.5 pl-10 bg-gray-50 border ${email && !emailValido ? 'border-red-200' : 'border-gray-100'} rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all`}
                     value={email} 
                     onChange={(e) => setEmail(e.target.value)} 
                     required 
@@ -127,7 +127,7 @@ export default function Register() {
                   <button
                     type="button"
                     onClick={() => setShowSelect(!showSelect)}
-                    className="w-full p-3 pl-10 pr-8 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-left text-[11px] font-bold transition-all flex items-center"
+                    className="w-full p-2.5 pl-10 pr-8 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-left text-[11px] font-bold transition-all flex items-center"
                   >
                     <FaVenusMars className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 size-2.5" />
                     <span className={sexo !== "" ? "text-gray-900" : "text-gray-400 uppercase"}>
@@ -137,13 +137,13 @@ export default function Register() {
                   </button>
 
                   {showSelect && (
-                    <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="absolute z-50 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
                       {opcoesSexo.map((op) => (
                         <button
                           key={op.label}
                           type="button"
                           onClick={() => { setSexo(op.value); setShowSelect(false); }}
-                          className="w-full p-3 text-left text-[9px] font-black uppercase tracking-widest hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-none"
+                          className="w-full p-2.5 text-left text-[9px] font-black uppercase tracking-widest hover:bg-gray-50 transition-colors border-b border-gray-50 last:border-none"
                         >
                           {op.label}
                         </button>
@@ -164,7 +164,7 @@ export default function Register() {
                   <input 
                     type={verSenha ? "text" : "password"} 
                     placeholder="••••••••"
-                    className="w-full p-3 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all"
+                    className="w-full p-2.5 pl-10 bg-gray-50 border border-gray-100 rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all"
                     value={senha} 
                     onChange={(e) => setSenha(e.target.value)} 
                     required 
@@ -181,7 +181,7 @@ export default function Register() {
                   <input 
                     type={verSenha ? "text" : "password"} 
                     placeholder="••••••••"
-                    className={`w-full p-3 pl-10 bg-gray-50 border ${senha && repitaSenha && !senhasCoincidem ? 'border-red-200' : 'border-gray-100'} rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all`}
+                    className={`w-full p-2.5 pl-10 bg-gray-50 border ${senha && repitaSenha && !senhasCoincidem ? 'border-red-200' : 'border-gray-100'} rounded-xl focus:bg-white focus:ring-4 focus:ring-blue-50 focus:border-black outline-none text-[11px] font-bold transition-all`}
                     value={repitaSenha} 
                     onChange={(e) => setRepitaSenha(e.target.value)} 
                     required 
@@ -200,7 +200,7 @@ export default function Register() {
             <button 
               type="submit" 
               disabled={botaoDesativado}
-              className={`w-full py-3.5 rounded-xl text-white font-black text-[10px] tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg mt-1 ${
+              className={`w-full py-3 rounded-xl text-white font-black text-[10px] tracking-[0.2em] transition-all flex items-center justify-center gap-3 shadow-lg mt-1 ${
                 botaoDesativado 
                   ? "bg-gray-100 text-gray-300 cursor-not-allowed shadow-none" 
                   : "bg-black hover:bg-blue-600 active:scale-95 shadow-blue-900/10"
@@ -221,6 +221,7 @@ export default function Register() {
         </div>
       </div>
 
+      {/* LADO DIREITO: IMAGEM */}
       <div className="hidden md:block md:w-1/2 relative bg-gray-900">
         <img 
           src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1469&auto=format&fit=crop" 
@@ -228,15 +229,15 @@ export default function Register() {
           className="absolute inset-0 w-full h-full object-cover opacity-80"
         />
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/20 to-transparent"></div>
-        <div className="absolute inset-0 flex flex-col justify-end p-16">
-          <div className="space-y-4">
+        <div className="absolute inset-0 flex flex-col justify-end p-12">
+          <div className="space-y-3">
             <span className="bg-blue-600 text-[10px] font-black text-white px-3 py-1 rounded-full uppercase tracking-widest">
               Entre no time
             </span>
-            <h2 className="text-white text-5xl font-black leading-[0.9] tracking-tighter uppercase italic">
+            <h2 className="text-white text-4xl font-black leading-[0.9] tracking-tighter uppercase italic">
               Performance<br />sem limites.
             </h2>
-            <div className="w-20 h-1.5 bg-blue-600 rounded-full"></div>
+            <div className="w-16 h-1.5 bg-blue-600 rounded-full"></div>
           </div>
         </div>
       </div>

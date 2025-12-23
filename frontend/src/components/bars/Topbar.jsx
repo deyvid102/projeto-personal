@@ -1,24 +1,29 @@
 import { useState, useEffect, useRef } from "react";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { 
-  FaSearch, FaUserCircle, FaBell, FaSignOutAlt, 
-  FaUserCog, FaChevronDown, FaUserGraduate 
+  FaSearch, FaBell, FaSignOutAlt, 
+  FaUserCog, FaDumbbell, FaUserGraduate 
 } from "react-icons/fa";
 
 export default function Topbar({ onLogout }) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [busca, setBusca] = useState("");
   const [alunos, setAlunos] = useState([]);
+  const [exercicios, setExercicios] = useState([]);
   const [resultados, setResultados] = useState([]);
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const [nomeExibicao, setNomeExibicao] = useState("carregando..."); 
   
+  // guardamos o id do personal para usar nas rotas
+  const [idPersonal, setIdPersonal] = useState(null);
+
   const menuRef = useRef(null);
   const buscaRef = useRef(null);
 
   useEffect(() => {
     const idLogado = localStorage.getItem("userId");
     if (idLogado) {
+      setIdPersonal(idLogado); // salva o id para as rotas
       fetch(`http://localhost:3000/personais/${idLogado}`)
         .then((res) => res.json())
         .then((data) => {
@@ -35,7 +40,12 @@ export default function Topbar({ onLogout }) {
     fetch(`http://localhost:3000/alunos`)
       .then((res) => res.json())
       .then((data) => setAlunos(data))
-      .catch((err) => console.error(err));
+      .catch((err) => console.error("erro ao buscar alunos:", err));
+
+    fetch(`http://localhost:3000/exercicios`)
+      .then((res) => res.json())
+      .then((data) => setExercicios(data))
+      .catch((err) => console.error("erro ao buscar exercicios:", err));
   }, []);
 
   useEffect(() => {
@@ -43,11 +53,19 @@ export default function Topbar({ onLogout }) {
       setResultados([]);
       return;
     }
-    const filtrados = alunos.filter((aluno) =>
-      aluno.nome.toLowerCase().includes(busca.toLowerCase())
-    );
-    setResultados(filtrados);
-  }, [busca, alunos]);
+
+    const termo = busca.toLowerCase();
+
+    const alunosFiltrados = alunos
+      .filter((aluno) => aluno.nome.toLowerCase().includes(termo))
+      .map((aluno) => ({ ...aluno, tipo: "aluno" }));
+
+    const exerciciosFiltrados = exercicios
+      .filter((ex) => ex.nome.toLowerCase().includes(termo))
+      .map((ex) => ({ ...ex, tipo: "exercicio" }));
+
+    setResultados([...alunosFiltrados, ...exerciciosFiltrados]);
+  }, [busca, alunos, exercicios]);
 
   useEffect(() => {
     function handleClickOutside(event) {
@@ -59,10 +77,8 @@ export default function Topbar({ onLogout }) {
   }, []);
 
   return (
-    /* md:left-20 ajustado para a sidebar slim */
     <header className="fixed top-0 right-0 md:left-20 left-0 h-16 bg-white/80 backdrop-blur-xl border-b border-gray-100 z-40 flex items-center justify-between px-8 transition-all duration-300">
       
-      {/* busca minimalista */}
       <div className="flex-1 max-w-sm relative" ref={buscaRef}>
         <div className="relative group">
           <FaSearch size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-blue-600 transition-colors" />
@@ -73,32 +89,48 @@ export default function Topbar({ onLogout }) {
               setBusca(e.target.value);
               setMostrarResultados(true);
             }}
-            placeholder="procurar atleta ou treino..."
+            placeholder="procurar atleta ou exercício..."
             className="w-full bg-gray-100/50 border-none py-2 pl-10 pr-4 rounded-xl text-[11px] font-bold uppercase tracking-tight focus:bg-white focus:ring-2 focus:ring-blue-600/20 outline-none transition-all duration-300"
           />
         </div>
 
-        {/* resultados dropdown */}
         {mostrarResultados && busca.length > 0 && (
           <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-blue-900/10 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
             <div className="max-h-64 overflow-y-auto p-2">
               {resultados.length > 0 ? (
-                resultados.map((aluno) => (
-                  <Link
-                    key={aluno._id}
-                    to={`/aluno/${aluno._id}`}
-                    onClick={() => { setBusca(""); setMostrarResultados(false); }}
-                    className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group"
-                  >
-                    <div className="w-8 h-8 rounded-lg bg-blue-50 flex items-center justify-center text-blue-600 font-black text-[10px]">
-                      {aluno.nome.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">{aluno.nome}</p>
-                      <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">acessar perfil</p>
-                    </div>
-                  </Link>
-                ))
+                resultados.map((item) => {
+                  // lógica para definir o link baseado no tipo e no personal logado
+                  const rotaDestino = item.tipo === "aluno" 
+                    ? `/${idPersonal}/alunos/${item._id}` 
+                    : `/${idPersonal}/exercicios/${item._id}`;
+
+                  return (
+                    <Link
+                      key={`${item.tipo}-${item._id}`}
+                      to={rotaDestino}
+                      onClick={() => { 
+                        setBusca(""); 
+                        setMostrarResultados(false); 
+                      }}
+                      className="flex items-center gap-3 px-3 py-2 hover:bg-gray-50 rounded-xl transition-colors group"
+                    >
+                      <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-[10px] ${
+                        item.tipo === "aluno" ? "bg-blue-50 text-blue-600" : "bg-orange-50 text-orange-600"
+                      }`}>
+                        {item.tipo === "aluno" ? <FaUserGraduate size={12}/> : <FaDumbbell size={12}/>}
+                      </div>
+
+                      <div>
+                        <p className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">
+                          {item.nome}
+                        </p>
+                        <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
+                          {item.tipo === "aluno" ? "acessar perfil" : "ver exercício"}
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })
               ) : (
                 <div className="px-4 py-8 text-center text-[10px] font-bold text-gray-300 uppercase tracking-widest">
                   nada encontrado
@@ -109,7 +141,6 @@ export default function Topbar({ onLogout }) {
         )}
       </div>
 
-      {/* ações lado direito */}
       <div className="flex items-center gap-6">
         <button className="relative text-gray-400 hover:text-blue-600 transition-colors">
           <FaBell size={16} />
@@ -131,7 +162,6 @@ export default function Topbar({ onLogout }) {
             </div>
           </button>
 
-          {/* menu drop down */}
           {menuAberto && (
             <div className="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in-95">
               <Link 

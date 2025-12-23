@@ -25,7 +25,8 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
   const objetivoOptions = [
     { id: 'hipertrofia', label: 'hipertrofia' },
     { id: 'definicao', label: 'definição' },
-    { id: 'emagrecimento', label: 'emagrecimento' }
+    { id: 'emagrecimento', label: 'emagrecimento' },
+    { id: 'outro', label: 'outro' }
   ];
 
   const sortOptions = [
