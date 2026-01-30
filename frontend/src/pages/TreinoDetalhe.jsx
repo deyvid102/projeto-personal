@@ -12,7 +12,7 @@ import {
 } from "react-icons/fa";
 
 export default function TreinoDetalhe() {
-  const { id: personalId, alunoId, treinoId } = useParams();
+  const { id: personalId, alunoId, projetoId, treinoId } = useParams();
   const navigate = useNavigate();
 
   const [treino, setTreino] = useState(null);
@@ -40,14 +40,14 @@ export default function TreinoDetalhe() {
   if (!treino) return <div className="p-10 text-center font-black uppercase text-gray-400">Treino não encontrado</div>;
 
   return (
-    <div className="max-w-4xl mx-auto pb-24 px-4 md:px-0">
+    <div className="max-w-4xl mx-auto pb-24 px-4 md:px-0 pt-10">
       
       {/* botão voltar */}
       <button
-        onClick={() => navigate(`/${personalId}/alunos/${alunoId}`)}
+        onClick={() => navigate(`/${personalId}/alunos/${alunoId}/projetos/${projetoId}`)}
         className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-widest mb-8 transition-colors"
       >
-        <FaArrowLeft size={10} /> Voltar ao perfil
+        <FaArrowLeft size={10} /> Voltar ao projeto
       </button>
 
       {/* header do treino */}

@@ -6,7 +6,7 @@ const ProjetoSchema = new mongoose.Schema({
         required: true
     },
 
-    objeto: {
+    objetivo: {
         type: String
     },
 

@@ -11,10 +11,10 @@ import {
   FaPauseCircle,
   FaTimesCircle
 } from "react-icons/fa";
-import ModalNovoTreino from "../components/modals/ModalNovoTreino";
+import ModalNovoTreino from "../components/modals/ModalTreino";
 
 export default function ProjetoDetalhe() {
-  const { id: personalId, alunoId, projetoId } = useParams();
+  const { personalId, alunoId, projetoId } = useParams();
   const navigate = useNavigate();
 
   const [projeto, setProjeto] = useState(null);
@@ -43,7 +43,13 @@ export default function ProjetoDetalhe() {
     carregarProjeto();
   }, [projetoId]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="p-10 text-center text-gray-400 font-bold">
+        Carregando projeto...
+      </div>
+    );
+  }
 
   if (!projeto) {
     return (
@@ -57,11 +63,20 @@ export default function ProjetoDetalhe() {
     RASCUNHO: "bg-gray-400",
     ATIVO: "bg-green-600",
     CONCLUIDO: "bg-blue-600",
-    CANCELADO: "bg-red-600"
+    CANCELADO: "bg-red-600",
+    AGENDADO: "bg-yellow-500"
   };
 
+  function formatarData(data) { 
+    return new Intl.DateTimeFormat("pt-BR",{
+        day: "2-digit",
+        month: "short",
+        year: "numeric" 
+      }).format(new Date(data));
+    }
+
   return (
-    <div className="max-w-4xl mx-auto pb-24 px-4 md:px-0">
+    <div className="max-w-5xl mx-auto pb-24 px-4 md:px-6 pt-10"> 
 
       {/* voltar */}
       <button
@@ -95,7 +110,8 @@ export default function ProjetoDetalhe() {
             <div className="flex items-center gap-1.5 border-l border-gray-200 pl-4">
               <FaCalendarAlt size={12} />
               <span className="text-[10px] font-bold uppercase">
-                {projeto.data_inicio || "sem início"} → {projeto.data_fim}
+                {projeto.data_inicio ? formatarData(projeto.data_inicio) : "sem início"} → 
+                {projeto.data_fim ? formatarData(projeto.data_fim) : "sem fim"} 
               </span>
             </div>
 
@@ -109,7 +125,7 @@ export default function ProjetoDetalhe() {
         </div>
 
         {/* CTA */}
-        {projeto.status === "ATIVO" && (
+        {!["CONCLUIDO", "CANCELADO"].includes(projeto.status?.toUpperCase()) && (
           <button
             onClick={() => setMostrarModalNovoTreino(true)}
             className="bg-black hover:bg-green-600 text-white px-6 py-3 rounded-xl font-black text-[10px] tracking-widest uppercase flex items-center gap-2 shadow-lg active:scale-95"
@@ -139,9 +155,7 @@ export default function ProjetoDetalhe() {
               <div
                 key={treino._id}
                 onClick={() =>
-                  navigate(
-                    `/${personalId}/alunos/${alunoId}/treinos/${treino._id}`
-                  )
+                  navigate(`/${personalId}/alunos/${alunoId}/projetos/${projeto._id}/treinos/${treino._id}`)
                 }
                 className="group bg-white p-5 rounded-2xl border border-gray-100 shadow-sm hover:border-green-200 transition-all flex items-center justify-between cursor-pointer"
               >

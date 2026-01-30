@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 export default function ModalNovoTreino({
-  alunoId,
+  projetoId,
   personalId,
   onClose,
   onCreated
@@ -9,7 +9,8 @@ export default function ModalNovoTreino({
   const [form, setForm] = useState({
     nome: "",
     objetivo: "",
-    observacoes: ""
+    observacoes: "",
+    ordem: ""
   });
   const [loading, setLoading] = useState(false);
 
@@ -19,9 +20,14 @@ export default function ModalNovoTreino({
 
   async function handleCriar() {
     if (!form.nome.trim()) {
-        alert("Informe o nome do treino");
-        return; 
+      alert("Informe o nome do treino");
+      return; 
     }
+    if (!form.nome.trim()) {
+      alert("Informe a ordem do treino")
+      return 
+    }
+
     try {
       setLoading(true);
       const res = await fetch("http://localhost:3000/treinos", {
@@ -29,11 +35,11 @@ export default function ModalNovoTreino({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           nome: form.nome,
-          obejtivo:form.objetivo,
+          objetivo:form.objetivo,
           observacoes: form.observacoes,
-          fk_aluno: alunoId,
+          fk_projeto: projetoId,
           fk_personal: personalId,
-          status: "A"
+          ordem: Number(form.ordem)
         })
       });
 
@@ -84,6 +90,15 @@ export default function ModalNovoTreino({
           className="w-full border rounded-lg px-3 py-2 mb-4 resize-none"
           rows={3}
         />
+
+        {/* Ordem */}
+        <input 
+          type="number" 
+          name="ordem" 
+          placeholder="Ordem do treino" 
+          value={form.ordem} 
+          onChange={handleChange} 
+          className="w-full border rounded-lg px-3 py-2 mb-4" />
 
         <div className="flex justify-end gap-2">
           <button

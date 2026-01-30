@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useEffect, useState, useCallback } from "react";
 import ModalAluno from "../components/modals/ModalAluno";
+import ModalNovoProjeto from "../components/modals/ModalProjeto";
 import ModalConfirmacao from "../components/modals/ModalConfirmacao";
 import StatusDot from "../components/StatusDot";
 import { useAlert } from "../components/hooks/useAlert";
@@ -22,11 +23,12 @@ export default function AlunoDetalhe() {
   const { alert, showAlert } = useAlert(2000);
 
   const [aluno, setAluno] = useState(null);
-  const [treinos, setTreinos] = useState([]);
+  const [projetos, setProjetos] = useState([]);
   const [loading, setLoading] = useState(true);
   
   const [mostrarModalEdit, setMostrarModalEdit] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+  const [mostrarModalProjeto, setMostrarModalProjeto] = useState(false);
 
   const objetivosMap = {
     hipertrofia: "hipertrofia",
@@ -79,18 +81,18 @@ export default function AlunoDetalhe() {
 
     try {
       setLoading(true);
-      const [resAluno, resTreinos] = await Promise.all([
+      const [resAluno, resProjetos] = await Promise.all([
         fetch(`http://localhost:3000/alunos/${alunoId}`),
-        fetch(`http://localhost:3000/treinos/${alunoId}`)
+        fetch(`http://localhost:3000/projetos/aluno/${alunoId}`)
       ]);
       
       if (!resAluno.ok) throw new Error("aluno não encontrado");
       
       const alunoData = await resAluno.json();
-      const treinosData = await resTreinos.json();
+      const projetosData = await resProjetos.json();
       
       setAluno(alunoData);
-      setTreinos(Array.isArray(treinosData) ? treinosData : []);
+      setProjetos(Array.isArray(projetosData) ? projetosData : []);
     } catch (err) {
       console.error(err);
       setAluno(null);
@@ -187,24 +189,37 @@ export default function AlunoDetalhe() {
       </div>
 
       <div className="space-y-6">
-        <div className="space-y-0.5 px-1">
-          <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">Treinos</h2>
-          <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">programação ativa</p>
+        <div className="flex items-center justify-between px-1">
+          <div>
+            <h2 className="text-2xl font-black text-gray-900 tracking-tighter uppercase italic">
+              Projetos
+            </h2>
+            <p className="text-[9px] font-bold text-gray-400 uppercase tracking-widest">
+              programação ativa
+            </p>
+          </div>
+
+          <button
+            onClick={() => setMostrarModalProjeto(true)}
+            className="bg-blue-600 text-white px-4 py-2 rounded-xl text-xs font-black uppercase tracking-widest hover:bg-black transition-all"
+          >
+            + Novo Projeto
+          </button>
         </div>
 
-        {treinos.length === 0 ? (
+        {projetos.length === 0 ? (
           <div className="bg-white border-2 border-dashed border-gray-100 rounded-[2.5rem] p-16 text-center">
             <div className="w-12 h-12 bg-gray-50 rounded-full flex items-center justify-center text-gray-200 mx-auto mb-4">
                 <FaDumbbell size={24} />
             </div>
-            <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em]">nenhuma planilha montada.</p>
+            <p className="text-gray-300 font-bold uppercase text-[9px] tracking-[0.2em]">Nenhuma planilha montada.</p>
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {treinos.map((treino) => (
+            {projetos.map((projeto) => (
               <div
-                key={treino._id}
-                onClick={() => navigate(`/${personalId}/alunos/${alunoId}/treinos/${treino._id}`)}
+                key={projeto._id}
+                onClick={() => navigate(`/${personalId}/alunos/${alunoId}/projetos/${projeto._id}`)}
                 className="group bg-white p-5 rounded-[2.2rem] border border-gray-100 shadow-sm hover:shadow-xl hover:border-blue-100 transition-all cursor-pointer flex items-center justify-between"
               >
                 <div className="flex items-center gap-4">
@@ -212,9 +227,9 @@ export default function AlunoDetalhe() {
                     <FaDumbbell size={20} />
                   </div>
                   <div>
-                    <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{treino.nome}</h3>
+                    <h3 className="font-black text-gray-900 text-lg uppercase tracking-tighter italic group-hover:text-blue-600 transition-colors">{projeto.nome}</h3>
                     <p className="text-[10px] font-bold text-gray-400 uppercase tracking-tight">
-                      {treino.exercicios?.length || 0} exercícios na série
+                      {projeto.exercicios?.length || 0} exercícios na série
                     </p>
                   </div>
                 </div>
@@ -226,6 +241,18 @@ export default function AlunoDetalhe() {
           </div>
         )}
       </div>
+
+      {mostrarModalProjeto && (
+        <ModalNovoProjeto
+          alunoId={alunoId}
+          personalId={personalId}
+          onClose={() => setMostrarModalProjeto(false)}
+          onCreated={(projeto) => {
+            setMostrarModalProjeto(false);
+            navigate(`/${personalId}/alunos/${alunoId}/projetos/${projeto._id}`);
+          }}
+        />
+      )}
 
       {mostrarModalEdit && (
         <ModalAluno

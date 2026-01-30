@@ -7,6 +7,7 @@ import Register from "./pages/Register";
 import Dashboard from "./pages/Dashboard";
 import Alunos from "./pages/Alunos";
 import AlunoDetalhe from "./pages/AlunoDetalhe";
+import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";
 import Exercicios from "./pages/Exercicios";
 
@@ -56,9 +57,10 @@ function App() {
             <Route path="/:personalId" element={<Dashboard />} />
             <Route path="/:personalId/alunos" element={<Alunos />} />
             <Route path="/:personalId/alunos/:alunoId" element={<AlunoDetalhe />} />
-            <Route path="/:personalId/alunos/:alunoId/treinos/:treinoId" element={<TreinoDetalhe />} />
+            <Route path="/:personalId/alunos/:alunoId/projetos/:projetoId/treinos/:treinoId" element={<TreinoDetalhe />} />
             <Route path="/:personalId/exercicios" element={<Exercicios />} />
-            
+            <Route path="/:personalId/alunos/:alunoId/projetos/:projetoId" element={<ProjetoDetalhe />} />
+
             <Route path="*" element={<Navigate to={`/${userId}`} />} />
           </Route>
         ) : (
