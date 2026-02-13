@@ -1,93 +1,44 @@
 import { useState, useEffect } from "react";
-import { FaDumbbell, FaClock, FaWeightHanging, FaListOl, FaPlus } from "react-icons/fa";
+import { FaDumbbell, FaLayerGroup } from "react-icons/fa";
 import SlideIn from "../SlideIn";
 import SelectPersonalizado from "../SelectPersonalizado";
 
-export default function ModalExercicio({ personalId, onClose, onSave }) {
+export default function ModalExercicio({ onClose, onSave, exercicioParaEditar }) {
   const storedUserId = localStorage.getItem("userId");
 
   const [form, setForm] = useState({
-    exercicioId: null,
     nome: "",
-    series: "",
-    repeticoes: "",
-    carga: "",
-    descanso: "",
-    observacoes: "",
+    grupoMuscular: "",
     fk_personal: storedUserId,
     publico: false,
   });
 
-  const [grupo, setGrupo] = useState("");
-  const [grupos, setGrupos] = useState([]);
-  const [exercicios, setExercicios] = useState([]);
-  const [filtro, setFiltro] = useState([]);
+  const opcoesGrupos = [
+    { value: "peito", label: "PEITO" },
+    { value: "costas", label: "COSTAS" },
+    { value: "pernas", label: "PERNAS" },
+    { value: "ombros", label: "OMBROS" },
+    { value: "braços", label: "BRAÇOS" },
+    { value: "abdômen", label: "ABDÔMEN" },
+  ];
 
-  // carrega exercícios públicos e privados do personal
-  const carregarDados = async () => {
-    try {
-      const res = await fetch(`http://localhost:3000/exercicios`);
-      const data = await res.json();
-      
-      const listaFiltrada = data.filter(ex => 
-        ex.publico === true || ex.publico === "true" || ex.fk_personal === storedUserId
-      );
-
-      setExercicios(listaFiltrada);
-      setFiltro(listaFiltrada);
-    } catch (err) {
-      console.error("erro ao carregar biblioteca", err);
+  useEffect(() => {
+    if (exercicioParaEditar) {
+      setForm({
+        nome: exercicioParaEditar.nome || "",
+        grupoMuscular: exercicioParaEditar.grupoMuscular || "",
+        fk_personal: storedUserId,
+        publico: false,
+      });
     }
-  };
-
-  useEffect(() => {
-    carregarDados();
-  }, [storedUserId]);
-
-  useEffect(() => {
-    const gruposUnicos = [...new Set(exercicios.map((e) => e.grupoMuscular))]
-      .filter(Boolean)
-      .map(g => ({ value: g, label: g.toUpperCase() }));
-    
-    setGrupos(gruposUnicos);
-  }, [exercicios]);
-
-  // filtragem automática em tempo real
-  useEffect(() => {
-    let lista = exercicios;
-    if (grupo) lista = lista.filter((e) => e.grupoMuscular === grupo);
-    if (form.nome && !form.exercicioId) {
-      lista = lista.filter((e) =>
-        e.nome.toLowerCase().includes(form.nome.toLowerCase())
-      );
-    }
-    setFiltro(lista);
-  }, [grupo, form.nome, exercicios, form.exercicioId]);
-
-  const handleChange = (e) => {
-    const { name, value } = e.target;
-    setForm((f) => ({ ...f, [name]: value }));
-    if (name === "nome") setForm((f) => ({ ...f, exercicioId: null }));
-  };
-
-  const selecionarExercicio = (ex) => {
-    setForm({
-      ...form,
-      exercicioId: ex._id,
-      nome: ex.nome,
-      fk_personal: storedUserId,
-      publico: false,
-    });
-    setGrupo(ex.grupoMuscular); 
-  };
+  }, [exercicioParaEditar, storedUserId]);
 
   const handleSave = () => {
-    if (!form.nome.trim()) return;
-    onSave({ ...form, grupoMuscular: grupo });
-    onClose();
+    if (!form.nome.trim() || !form.grupoMuscular) return;
+    onSave(form); // envia os dados para a função handleSaveExercicio no pai
   };
 
-  const isInvalido = !form.nome.trim();
+  const isInvalido = !form.nome.trim() || !form.grupoMuscular;
 
   return (
     <div 
@@ -97,123 +48,61 @@ export default function ModalExercicio({ personalId, onClose, onSave }) {
       <SlideIn from="bottom">
         <div 
           onClick={(e) => e.stopPropagation()} 
-          className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-6 md:p-8 shadow-2xl overflow-y-auto max-h-[95vh]"
+          className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-md p-6 md:p-8 shadow-2xl"
         >
           <div className="flex justify-between items-center mb-6">
             <div>
               <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter italic">
-                novo <span className="text-blue-600">exercício</span>
+                {exercicioParaEditar ? "editar" : "novo"} <span className="text-blue-600">exercício</span>
               </h2>
               <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-1">
-                monte a ficha de treino
+                biblioteca privada
               </p>
             </div>
           </div>
 
-          <div className="space-y-4">
-            <div className="space-y-2 relative">
-              <div className="flex flex-col md:flex-row gap-2">
-                {/* Campo de Nome */}
-                <div className="relative flex-[1.5]">
-                  <input
-                    name="nome"
-                    value={form.nome}
-                    onChange={handleChange}
-                    placeholder="NOME DO EXERCÍCIO..."
-                    autoComplete="off"
-                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 pl-10 text-xs font-bold uppercase placeholder:text-gray-300 focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
-                  />
-                  <FaDumbbell className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
-                </div>
-                
-                {/* Seletor de Grupo Muscular */}
-                <div className="flex-1 font-montserrat text-[11px] font-light">
-                  <SelectPersonalizado 
-                    options={grupos}
-                    value={grupo}
-                    onChange={(val) => setGrupo(val)}
-                    placeholder={grupo === "" ? "GRUPO" : "GRUPO SELECIONADO"}
-                  />
-                </div>
+          <div className="space-y-5">
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">nome do exercício</label>
+              <div className="relative">
+                <input
+                  value={form.nome}
+                  onChange={(e) => setForm({...form, nome: e.target.value})}
+                  placeholder="EX: SUPINO RETO"
+                  className="w-full bg-gray-50 border-none rounded-xl px-4 py-3.5 pl-10 text-xs font-bold uppercase focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
+                />
+                <FaDumbbell className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={12} />
               </div>
-
-              {/* Lista de sugestões flutuante */}
-              {form.nome && filtro.length > 0 && !form.exercicioId && (
-                <div className="absolute z-50 w-full bg-white border border-gray-100 rounded-2xl mt-1 shadow-2xl max-h-52 overflow-y-auto p-2 border-t-4 border-t-blue-600">
-                  {filtro.map((ex) => (
-                    <div
-                      key={ex._id}
-                      onClick={() => selecionarExercicio(ex)}
-                      className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-blue-50 rounded-xl transition-colors group"
-                    >
-                      <div className="flex flex-col">
-                        <span className="text-[11px] font-black text-gray-800 uppercase tracking-tighter group-hover:text-blue-600">
-                          {ex.nome}
-                        </span>
-                        <div className="flex gap-2 items-center">
-                          <span className="text-[8px] font-bold text-gray-400 uppercase tracking-widest">
-                            {ex.grupoMuscular}
-                          </span>
-                          {ex.publico && (
-                            <span className="text-[7px] bg-blue-100 text-blue-600 px-1 rounded font-bold uppercase">Público</span>
-                          )}
-                        </div>
-                      </div>
-                      <FaPlus size={10} className="text-gray-200 group-hover:text-blue-600" />
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Grid de Parâmetros */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                { label: 'séries', name: 'series', icon: FaListOl, placeholder: '0' },
-                { label: 'repetições', name: 'repeticoes', icon: FaDumbbell, placeholder: '10-12' },
-                { label: 'carga', name: 'carga', icon: FaWeightHanging, placeholder: 'ex: 20kg' },
-                { label: 'descanso', name: 'descanso', icon: FaClock, placeholder: '60s' },
-              ].map((field) => (
-                <div key={field.name} className="space-y-1">
-                  <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                    {field.label}
-                  </label>
-                  <div className="relative">
-                    <field.icon className="absolute left-4 top-1/2 -translate-y-1/2 text-blue-600/30" size={12} />
-                    <input
-                      name={field.name}
-                      value={form[field.name]}
-                      onChange={handleChange}
-                      placeholder={field.placeholder}
-                      className="w-full bg-gray-50 border-none rounded-xl py-3.5 pl-10 pr-4 text-xs font-bold focus:ring-2 focus:ring-blue-600/20 outline-none"
-                    />
-                  </div>
-                </div>
-              ))}
             </div>
 
             <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">observações</label>
-              <textarea
-                name="observacoes"
-                value={form.observacoes}
-                onChange={handleChange}
-                placeholder="notas adicionais..."
-                className="w-full bg-gray-50 border-none rounded-xl p-4 text-xs font-medium outline-none focus:ring-2 focus:ring-blue-600/20 min-h-[90px] resize-none"
-              />
+              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">grupo muscular</label>
+              <div className="relative">
+                <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-gray-300 pointer-events-none">
+                  <FaLayerGroup size={12} />
+                </div>
+                <div className="pl-6">
+                  <SelectPersonalizado 
+                    options={opcoesGrupos}
+                    value={form.grupoMuscular}
+                    onChange={(val) => setForm({...form, grupoMuscular: val})}
+                    placeholder="SELECIONE..."
+                  />
+                </div>
+              </div>
             </div>
           </div>
 
           <div className="flex flex-col md:flex-row gap-2 mt-8">
             <button onClick={onClose} className="flex-1 order-2 md:order-1 py-3.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 rounded-xl transition-all">
-              descartar
+              cancelar
             </button>
             <button 
               disabled={isInvalido}
               onClick={handleSave} 
-              className={`flex-[2] order-1 md:order-2 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isInvalido ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none" : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"}`}
+              className={`flex-[2] order-1 md:order-2 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${isInvalido ? "bg-gray-200 text-gray-400 cursor-not-allowed" : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"}`}
             >
-              confirmar exercício
+              salvar exercício
             </button>
           </div>
         </div>

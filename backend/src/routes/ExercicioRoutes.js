@@ -1,8 +1,7 @@
 import express from "express";
 import {
     criarExercicio,
-    listarExerciciosPublicos,
-    listarExerciciosDoPersonal,
+    listarExercicios, // função unificada
     atualizarExercicio,
     deletarExercicio
 } from "../controllers/ControlExercicio.js";
@@ -10,8 +9,11 @@ import {
 const router = express.Router();
 
 router.post('/', criarExercicio);
-router.get('/', listarExerciciosPublicos);
-router.get('/:personalId', listarExerciciosDoPersonal);
+
+// as duas rotas abaixo usam a mesma função listarExercicios
+router.get('/', listarExercicios); 
+router.get('/:personalId', listarExercicios);
+
 router.put('/:id', atualizarExercicio);
 router.delete('/:id', deletarExercicio);
 
