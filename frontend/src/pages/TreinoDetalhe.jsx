@@ -1,6 +1,7 @@
 import { useParams, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
 import ModalExercicio from "../components/modals/ModalExercicio";
+import ModalExercicioTreino from "../components/modals/ModalExercicioTreino";
 import { 
   FaArrowLeft, 
   FaPlus, 
@@ -16,28 +17,91 @@ export default function TreinoDetalhe() {
   const navigate = useNavigate();
 
   const [treino, setTreino] = useState(null);
+  const [exerciciosBiblioteca, setExerciciosBiblioteca] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [mostrarModal, setMostrarModal] = useState(false);
+  
+  // estados para controle dos modais
+  const [isBuscadorOpen, setIsBuscadorOpen] = useState(false);
+  const [isCadastroOpen, setIsCadastroOpen] = useState(false);
+  const [nomeSugerido, setNomeSugerido] = useState("");
+
+  async function carregarDados() {
+    try {
+      // 1. busca os dados do treino
+      const resTreino = await fetch(`http://localhost:3000/treinos/${treinoId}`);
+      if (!resTreino.ok) throw new Error("treino não encontrado");
+      const dataTreino = await resTreino.json();
+      setTreino({ ...dataTreino, exercicios: dataTreino.exercicios || [] });
+
+      // 2. busca a biblioteca global para o buscador novo
+      const resEx = await fetch(`http://localhost:3000/exercicios?fk_personal=${personalId}`);
+      const dataEx = await resEx.json();
+      setExerciciosBiblioteca(dataEx);
+    } catch (err) {
+      console.error(err);
+      setTreino(null);
+    } finally {
+      setLoading(false);
+    }
+  }
 
   useEffect(() => {
-    async function carregarTreino() {
-      try {
-        const res = await fetch(`http://localhost:3000/treinos/${treinoId}`);
-        if (!res.ok) throw new Error("Treino não encontrado");
-        const data = await res.json();
-        setTreino({ ...data, exercicios: data.exercicios || [] });
-      } catch (err) {
-        console.error(err);
-        setTreino(null);
-      } finally {
-        setLoading(false);
+    carregarDados();
+  }, [treinoId, personalId]);
+
+  // fluxo: adicionar exercício existente da biblioteca diretamente ao treino
+  const handleAdicionarExercicioExistente = async (exercicio) => {
+    try {
+      const novaRelacao = {
+        fk_exercicio: exercicio._id,
+        series: "3",
+        repeticoes: "12",
+        descanso: "60s"
+      };
+
+      const res = await fetch(`http://localhost:3000/treinos/${treino._id}/exercicios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(novaRelacao),
+      });
+
+      if (res.ok) {
+        await carregarDados(); // atualiza a lista na tela
+        setIsBuscadorOpen(false); // fecha o buscador
       }
+    } catch (err) {
+      console.error("erro ao adicionar ao treino:", err);
     }
-    carregarTreino();
-  }, [treinoId]);
+  };
+
+  // fluxo: abre o cadastro de novo exercício vindo do buscador
+  const handleAbrirCadastroPeloBuscador = (nomeDigitado) => {
+    setNomeSugerido(nomeDigitado);
+    setIsBuscadorOpen(false);
+    setIsCadastroOpen(true);
+  };
+
+  // fluxo: salva novo exercício na biblioteca e já insere no treino atual
+  const handleSalvarNovoECadastrarNoTreino = async (dadosForm) => {
+    try {
+      const resNovo = await fetch(`http://localhost:3000/exercicios`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(dadosForm)
+      });
+      const novoEx = await resNovo.json();
+
+      if (resNovo.ok) {
+        await handleAdicionarExercicioExistente(novoEx);
+        setIsCadastroOpen(false);
+      }
+    } catch (err) {
+      console.error("erro no cadastro rápido:", err);
+    }
+  };
 
   if (loading) return null;
-  if (!treino) return <div className="p-10 text-center font-black uppercase text-gray-400">Treino não encontrado</div>;
+  if (!treino) return <div className="p-10 text-center font-black uppercase text-gray-400">treino não encontrado</div>;
 
   return (
     <div className="max-w-4xl mx-auto pb-24 px-4 md:px-0 pt-10">
@@ -47,14 +111,14 @@ export default function TreinoDetalhe() {
         onClick={() => navigate(`/${personalId}/alunos/${alunoId}/projetos/${projetoId}`)}
         className="flex items-center gap-2 text-[10px] font-black text-gray-400 hover:text-black uppercase tracking-widest mb-8 transition-colors"
       >
-        <FaArrowLeft size={10} /> Voltar ao projeto
+        <FaArrowLeft size={10} /> voltar ao projeto
       </button>
 
       {/* header do treino */}
       <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
         <div className="space-y-2">
           <span className="bg-blue-600 text-[9px] font-black text-white px-3 py-1 rounded-full uppercase tracking-widest">
-            Protocolo de Treino
+            protocolo de treino
           </span>
           <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter italic uppercase leading-none">
             {treino.nome}
@@ -75,11 +139,18 @@ export default function TreinoDetalhe() {
           </div>
         </div>
 
+        {/* botão adicionar: abre o novo buscador inteligente */}
         <button 
-          onClick={() => setMostrarModal(true)}
-          className="bg-black hover:bg-blue-600 text-white px-6 py-3 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all flex items-center gap-2 shadow-lg active:scale-95"
+          onClick={() => setIsBuscadorOpen(true)}
+          className="bg-black hover:bg-blue-600 text-white px-6 py-3.5 rounded-xl font-black text-[10px] tracking-widest uppercase transition-all duration-300 flex items-center gap-3 shadow-lg active:scale-95 group"
         >
-          <FaPlus size={10} /> Adicionar Exercício
+          <div className="relative">
+            <FaDumbbell size={14} className="group-hover:rotate-[-15deg] transition-transform" />
+            <div className="absolute -top-1 -right-1.5 bg-blue-600 group-hover:bg-black text-white rounded-full p-[0.5px] border border-black group-hover:border-blue-600 transition-colors">
+              <FaPlus size={5} />
+            </div>
+          </div>
+          adicionar exercício
         </button>
       </div>
 
@@ -88,13 +159,13 @@ export default function TreinoDetalhe() {
       {/* lista de exercícios */}
       <div className="space-y-4">
         <h2 className="text-[11px] font-black text-gray-900 uppercase tracking-[0.3em] mb-6 flex items-center gap-2">
-          Ordem de Execução <div className="h-px bg-gray-100 flex-1"></div>
+          ordem de execução <div className="h-px bg-gray-100 flex-1"></div>
         </h2>
 
         {treino.exercicios.length === 0 ? (
           <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-3xl p-12 text-center">
             <p className="text-gray-400 font-bold uppercase text-[10px] tracking-widest">
-              Nenhum exercício na lista. comece agora.
+              nenhum exercício na lista. comece agora.
             </p>
           </div>
         ) : (
@@ -111,20 +182,20 @@ export default function TreinoDetalhe() {
                   
                   <div className="space-y-1">
                     <h3 className="font-black text-gray-900 text-sm uppercase tracking-tight group-hover:text-blue-600 transition-colors">
-                      {ex.fk_exercicio?.nome || "Exercício"}
+                      {ex.fk_exercicio?.nome || "exercício"}
                     </h3>
                     
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                       <div className="flex items-center gap-1.5">
                         <FaLayerGroup size={10} className="text-gray-300" />
                         <span className="text-[10px] font-black text-gray-500 uppercase italic">
-                          {ex.series} <span className="text-gray-300">SÉRIES</span>
+                          {ex.series} <span className="text-gray-300">séries</span>
                         </span>
                       </div>
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 border-l border-gray-100 pl-4">
                         <FaDumbbell size={10} className="text-gray-300" />
                         <span className="text-[10px] font-black text-gray-500 uppercase italic">
-                          {ex.repeticoes} <span className="text-gray-300">REPS</span>
+                          {ex.repeticoes} <span className="text-gray-300">reps</span>
                         </span>
                       </div>
                       {ex.carga && (
@@ -133,7 +204,7 @@ export default function TreinoDetalhe() {
                         </div>
                       )}
                       {ex.descanso && (
-                        <div className="flex items-center gap-1.5 text-orange-500">
+                        <div className="flex items-center gap-1.5 text-orange-500 border-l border-gray-100 pl-4">
                           <FaClock size={10} />
                           <span className="text-[9px] font-black uppercase tracking-tighter">
                             {ex.descanso}
@@ -153,24 +224,22 @@ export default function TreinoDetalhe() {
         )}
       </div>
 
-      {/* modal de exercício */}
-      {mostrarModal && (
+      {/* 1. buscador dinâmico (modalexerciciotreino) */}
+      <ModalExercicioTreino 
+        isOpen={isBuscadorOpen}
+        onClose={() => setIsBuscadorOpen(false)}
+        exerciciosBiblioteca={exerciciosBiblioteca}
+        onSelectExercicio={handleAdicionarExercicioExistente}
+        onOpenCadastroRapido={handleAbrirCadastroPeloBuscador}
+      />
+
+      {/* 2. cadastro original (só abre se clicar no + do buscador) */}
+      {isCadastroOpen && (
         <ModalExercicio
           personalId={personalId}
-          onClose={() => setMostrarModal(false)}
-          onSave={async (novoExercicio) => {
-            const res = await fetch(
-              `http://localhost:3000/treinos/${treino._id}/exercicios`,
-              {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify(novoExercicio),
-              }
-            );
-            const treinoAtualizado = await res.json();
-            setTreino(treinoAtualizado);
-            setMostrarModal(false);
-          }}
+          exercicioParaEditar={nomeSugerido ? { nome: nomeSugerido } : null}
+          onClose={() => setIsCadastroOpen(false)}
+          onSave={handleSalvarNovoECadastrarNoTreino}
         />
       )}
     </div>

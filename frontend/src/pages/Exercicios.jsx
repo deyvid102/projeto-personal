@@ -18,6 +18,8 @@ export default function Exercicios() {
 
   const { personalId } = useParams();
   const navigate = useNavigate();
+  
+  // hook de alert customizado
   const { alert, showAlert } = useAlert(2000);
 
   const { currentData, currentPage, totalPages, goToPage, totalItems } = usePagination(exerciciosFiltrados, 40);
@@ -34,11 +36,8 @@ export default function Exercicios() {
 
   async function carregarExercicios() {
     try {
-      // busca exercícios vinculados ao personalId da URL
       const res = await fetch(`http://localhost:3000/exercicios?fk_personal=${personalId}`);
       const data = await res.json();
-      
-      // ordena e salva no estado
       const ordenados = data.sort((a, b) => a.nome.localeCompare(b.nome));
       setExercicios(ordenados);
       setExerciciosFiltrados(ordenados);
@@ -63,14 +62,32 @@ export default function Exercicios() {
       });
 
       if (response.ok) {
-        showAlert(isEdicao ? "atualizado!" : "cadastrado!", "success");
-        await carregarExercicios(); // ESSENCIAL: recarrega a lista do banco
+        showAlert(isEdicao ? "atualizado com sucesso!" : "cadastrado com sucesso!", "success");
+        await carregarExercicios();
         setIsModalOpen(false);
       } else {
-        showAlert("erro ao salvar", "error");
+        showAlert("erro ao salvar exercício", "error");
       }
     } catch (err) {
-      showAlert("erro de conexão", "error");
+      showAlert("erro de conexão com o servidor", "error");
+    }
+  };
+
+  const handleDeletarExercicio = async (id) => {
+    try {
+      const response = await fetch(`http://localhost:3000/exercicios/${id}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        showAlert("exercício excluído!", "success");
+        await carregarExercicios();
+        setIsModalOpen(false);
+      } else {
+        showAlert("erro ao excluir exercício", "error");
+      }
+    } catch (err) {
+      showAlert("erro de conexão ao deletar", "error");
     }
   };
 
@@ -97,18 +114,19 @@ export default function Exercicios() {
 
   return (
     <div className="w-full min-h-screen pb-20 md:pl-20 bg-white">
+      {/* renderização do componente de alert customizado */}
       <Alert message={alert.message} type={alert.type} />
 
       {isModalOpen && (
         <ModalExercicio
           onClose={() => setIsModalOpen(false)}
           onSave={handleSaveExercicio}
+          onDelete={handleDeletarExercicio}
           exercicioParaEditar={exercicioParaEditar}
         />
       )}
 
       <div className="w-full px-4 md:px-0">
-        {/* cabeçalho */}
         <div className="mt-6 md:mt-12 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
           <div>
             <div className="flex items-center gap-3 mb-1">
@@ -129,16 +147,22 @@ export default function Exercicios() {
                 className="bg-gray-50 border-none rounded-xl py-2.5 md:py-3 pl-9 md:pl-10 pr-4 text-[11px] font-bold w-full md:w-64 outline-none"
               />
             </div>
+            
             <button 
               onClick={() => { setExercicioParaEditar(null); setIsModalOpen(true); }}
-              className="bg-black text-white p-3 md:p-3.5 rounded-xl shadow-lg active:scale-95 transition-transform"
+              className="bg-black hover:bg-blue-600 text-white px-4 py-3 md:py-3.5 rounded-xl shadow-lg active:scale-95 transition-all duration-300 flex items-center gap-3 group"
             >
-              <FaPlus size={14} />
+              <div className="relative">
+                <FaDumbbell size={16} className="transition-transform" />
+                {/* bolinha do plus menor com inversão de cor no hover */}
+                <div className="absolute -top-1 -right-1.5">
+                  <FaPlus size={5} />
+                </div>
+              </div>
             </button>
           </div>
         </div>
 
-        {/* filtros de grupo */}
         <div className="mb-8 flex gap-2 overflow-x-auto pb-4 scrollbar-hide">
           {gruposMusculares.map((grupo) => (
             <button
@@ -151,7 +175,6 @@ export default function Exercicios() {
           ))}
         </div>
 
-        {/* grid de exercícios */}
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5">
           {currentData.map((ex) => (
             <div
