@@ -1,5 +1,6 @@
 /* index.css */
 @import "tailwindcss";
+@variant dark (&:where(.dark, .dark *));
 
 html {
   /* Define a base da fonte para 18px e aplica cores do Tailwind */

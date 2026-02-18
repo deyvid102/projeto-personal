@@ -1,11 +1,12 @@
 import { useState, useEffect } from "react";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import bcrypt from "bcryptjs";
 import logo from "../assets/HP.png";
-import { FaEye, FaEyeSlash, FaSpinner, FaLock, FaEnvelope } from "react-icons/fa";
+import { FaEye, FaEyeSlash, FaSpinner, FaLock, FaEnvelope, FaArrowLeft } from "react-icons/fa";
 
 export default function Login({ onLogin }) {
   const location = useLocation();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
@@ -52,6 +53,7 @@ export default function Login({ onLogin }) {
       }
 
       localStorage.setItem("userId", usuario._id);
+      localStorage.setItem("userType", "personal"); // Define fixo como personal por enquanto
       if (onLogin) onLogin(usuario);
     } catch (err) {
       setErro(err.name === 'AbortError' ? "servidor offline." : "falha na conexão.");
@@ -60,9 +62,18 @@ export default function Login({ onLogin }) {
   }
 
   return (
-    <div className="h-screen flex bg-white w-full overflow-hidden font-sans">
+    <div className="h-screen flex bg-white w-full overflow-hidden font-sans relative">
+      
+      {/* BOTÃO VOLTAR - CANTO SUPERIOR ESQUERDO */}
+      <button 
+        onClick={() => navigate("/")}
+        className="absolute top-6 left-6 z-10 flex items-center gap-2 text-gray-400 hover:text-black transition-colors text-[10px] font-black uppercase tracking-widest"
+      >
+        <FaArrowLeft size={12} /> voltar
+      </button>
+
       {/* LADO ESQUERDO: LOGIN */}
-      <div className="w-full md:w-1/2 flex items-start justify-center pt-8 md:pt-12 px-8">
+      <div className="w-full md:w-1/2 flex items-start justify-center pt-16 md:pt-24 px-8">
         <div className="w-full max-w-sm">
           
           <div className="flex flex-col items-center mb-6 text-center">
