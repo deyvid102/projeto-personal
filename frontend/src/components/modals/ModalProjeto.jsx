@@ -1,164 +1,205 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import SlideIn from "../SlideIn";
+import ModalConfirmacao from "./ModalConfirmacao";
+import SelectPersonalizado from "../SelectPersonalizado"; 
+import { 
+  FaCalendarAlt, 
+  FaBullseye, 
+  FaEdit, 
+  FaCheck, 
+  FaTrashAlt, 
+  FaTimes 
+} from "react-icons/fa";
 
-export default function ModalNovoProjeto({ onClose, onCreated, alunoId, personalId }) {
+export default function ModalNovoProjeto({ onClose, onCreated, alunoId, personalId, projeto }) {
+  const [loading, setLoading] = useState(false);
+  const [erroData, setErroData] = useState("");
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+  
   const [formData, setFormData] = useState({
     nome: "",
     objetivo: "",
     descricao: "",
-    data_inicio: "",
+    status: "R", 
+    data_inicio: new Date().toISOString().split("T")[0],
     data_fim: ""
   });
 
-  const isFormularioInvalido =
-  !formData.nome.trim() ||
-  !formData.objetivo.trim() ||
-  !formData.data_fim;
+  const statusOptions = [
+    { value: 'R', label: 'Rascunho' },
+    { value: 'AG', label: 'Agendado' },
+    { value: 'A', label: 'Ativo' },
+    { value: 'F', label: 'Finalizado' },
+    { value: 'C', label: 'Cancelado' }
+  ];
+
+  useEffect(() => {
+    if (projeto) {
+      setFormData({
+        nome: projeto.nome || "",
+        objetivo: projeto.objetivo || "",
+        descricao: projeto.descricao || "",
+        status: projeto.status || "R",
+        data_inicio: projeto.data_inicio ? projeto.data_inicio.split("T")[0] : "",
+        data_fim: projeto.data_fim ? projeto.data_fim.split("T")[0] : ""
+      });
+    }
+  }, [projeto]);
+
+  const isFormularioInvalido = !formData.nome.trim() || !formData.objetivo.trim() || !formData.data_fim || loading;
 
   const handleSave = async () => {
     if (isFormularioInvalido) return;
-    
-    if (formData.data_inicio && formData.data_fim < formData.data_inicio) {
-      alert("A data final não pode ser menor que a data inicial");
+
+    const inicio = new Date(formData.data_inicio);
+    const fim = new Date(formData.data_fim);
+    inicio.setMinutes(inicio.getMinutes() + inicio.getTimezoneOffset());
+    fim.setMinutes(fim.getMinutes() + fim.getTimezoneOffset());
+
+    if (fim < inicio) {
+      setErroData("a data final deve ser posterior à inicial");
       return;
     }
 
-    const payload = {
-      ...formData,
-      fk_aluno: alunoId,
-      fk_personal: personalId
-    };
+    setLoading(true);
+    setErroData("");
 
+    const payload = { ...formData, fk_aluno: alunoId, fk_personal: personalId };
+    const url = projeto ? `http://localhost:3000/projetos/${projeto._id}` : "http://localhost:3000/projetos";
+    
     try {
-      const res = await fetch("http://localhost:3000/projetos", {
-        method: "POST",
+      const res = await fetch(url, {
+        method: projeto ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
       });
 
       if (!res.ok) throw new Error();
-
-      const projeto = await res.json();
-      onCreated(projeto);
+      onCreated(await res.json());
       onClose();
     } catch {
-      alert("Erro ao criar projeto");
+      setErroData("erro ao processar projeto");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    try {
+      await fetch(`http://localhost:3000/projetos/${projeto._id}`, { method: "DELETE" });
+      onCreated();
+      onClose();
+    } catch {
+      setErroData("erro ao excluir projeto");
     }
   };
 
   return (
-    <div
-      className="fixed inset-0 bg-black/60 z-[60] flex items-end md:items-center justify-center p-0 md:p-4"
-      onClick={onClose}
-    >
-      <SlideIn from="bottom">
-        <div
-          onClick={(e) => e.stopPropagation()}
-          className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-md p-5 md:p-7 shadow-2xl overflow-y-auto max-h-[90vh]"
-        >
-          {/* HEADER */}
-          <div className="flex justify-between items-center mb-6">
-            <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter italic">
-              novo <span className="text-blue-600">projeto</span>
-            </h2>
+    <>
+      <div className="fixed inset-0 bg-black/60 z-[60] flex items-end md:items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <SlideIn from="bottom">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-6 md:p-10 shadow-2xl relative">
+            
+            {/* cabeçalho com X e lixeira */}
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl md:text-2xl font-[1000] text-gray-900 uppercase italic tracking-tighter leading-none">
+                {projeto ? "editar" : "novo"} <span className="text-blue-600">projeto_</span>
+              </h2>
+              <div className="flex items-center gap-4">
+                {projeto && (
+                  <button onClick={() => setMostrarConfirmacao(true)} className="text-gray-300 hover:text-red-500 transition-colors p-2">
+                    <FaTrashAlt size={16} />
+                  </button>
+                )}
+                <button onClick={onClose} className="text-gray-400 hover:text-black transition-colors">
+                  <FaTimes size={20} />
+                </button>
+              </div>
+            </div>
+
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaEdit size={10} /> nome do projeto
+                </label>
+                <input 
+                  value={formData.nome} 
+                  onChange={(e) => setFormData({ ...formData, nome: e.target.value })} 
+                  placeholder="Ex: Consultoria Mensal"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all" 
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaBullseye size={10} /> objetivo principal
+                </label>
+                <input 
+                  value={formData.objetivo} 
+                  onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })} 
+                  placeholder="Ex: Perda de gordura"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all" 
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                    <FaCalendarAlt size={10} /> início
+                  </label>
+                  <input 
+                    type="date" 
+                    value={formData.data_inicio} 
+                    onChange={(e) => { setErroData(""); setFormData({ ...formData, data_inicio: e.target.value }); }} 
+                    className="w-full bg-gray-50 border-2 border-transparent rounded-2xl px-4 py-4 text-xs font-bold outline-none" 
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                    <FaCalendarAlt size={10} /> previsão fim
+                  </label>
+                  <input 
+                    type="date" 
+                    value={formData.data_fim} 
+                    onChange={(e) => { setErroData(""); setFormData({ ...formData, data_fim: e.target.value }); }} 
+                    className={`w-full bg-gray-50 border-2 rounded-2xl px-4 py-4 text-xs font-bold outline-none transition-all ${erroData ? "border-red-100 text-red-600" : "border-transparent"}`} 
+                  />
+                </div>
+              </div>
+
+              {projeto && (
+                <div className="pt-2">
+                  <SelectPersonalizado 
+                    label="status atual"
+                    options={statusOptions}
+                    value={formData.status}
+                    onChange={(val) => setFormData({ ...formData, status: val })}
+                  />
+                </div>
+              )}
+
+              {erroData && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-center animate-pulse pt-2">{erroData}</p>}
+            </div>
+
+            {/* Botão de ação padrão ModalTreino */}
+            <div className="mt-10">
+              <button 
+                disabled={isFormularioInvalido} 
+                onClick={handleSave} 
+                className={`w-full py-5 rounded-2xl text-[11px] font-[1000] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${isFormularioInvalido ? "bg-gray-100 text-gray-300 cursor-not-allowed" : "bg-black text-white hover:bg-blue-600 shadow-xl"}`}
+              >
+                {loading ? <span className="animate-pulse">processando...</span> : <><FaCheck size={12} /> {projeto ? "atualizar" : "salvar"} projeto</>}
+              </button>
+            </div>
           </div>
+        </SlideIn>
+      </div>
 
-          <div className="space-y-4">
-
-            {/* nome */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                nome do projeto
-              </label>
-              <input
-                value={formData.nome}
-                onChange={(e) => setFormData({ ...formData, nome: e.target.value })}
-                placeholder="nome do projeto*"
-                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-light font-montserrat placeholder:font-light focus:ring-2 focus:ring-blue-600/20 outline-none"
-              />
-            </div>
-
-            {/* objetivo */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                objetivo
-              </label>
-              <input
-                value={formData.objetivo}
-                onChange={(e) => setFormData({ ...formData, objetivo: e.target.value })}
-                placeholder="objetivo do projeto"
-                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-light font-montserrat placeholder:font-light focus:ring-2 focus:ring-blue-600/20 outline-none"
-              />
-            </div>
-
-            {/* descrição */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                descrição
-              </label>
-              <textarea
-                rows={3}
-                value={formData.descricao}
-                onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
-                placeholder="descrição (opcional)"
-                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-light font-montserrat placeholder:font-light focus:ring-2 focus:ring-blue-600/20 outline-none resize-none"
-              />
-            </div>
-
-            {/* data inicio */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                data inicial
-              </label>
-              <input
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                value={formData.data_inicio}
-                onChange={(e) => setFormData({ ...formData, data_inicio: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-light font-montserrat focus:ring-2 focus:ring-blue-600/20 outline-none"
-              />
-            </div>
-
-            {/* data fim */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
-                data final
-              </label>
-              <input
-                type="date"
-                min={new Date().toISOString().split("T")[0]}
-                value={formData.data_fim}
-                onChange={(e) => setFormData({ ...formData, data_fim: e.target.value })}
-                className="w-full bg-gray-50 border-none rounded-xl px-4 py-3 text-xs font-light font-montserrat focus:ring-2 focus:ring-blue-600/20 outline-none"
-              />
-            </div>
-          </div>
-
-          {/* BOTÕES */}
-          <div className="flex flex-col md:flex-row gap-2 mt-8">
-            <button
-              onClick={onClose}
-              className="flex-1 order-2 md:order-1 py-3.5 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 rounded-xl"
-            >
-              voltar
-            </button>
-
-            <button
-              disabled={isFormularioInvalido}
-              onClick={handleSave}
-              className={`flex-[2] order-1 md:order-2 py-3.5 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all
-                ${
-                  isFormularioInvalido
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed shadow-none"
-                    : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"
-                }
-              `}
-            >
-              criar projeto
-            </button>
-          </div>
-        </div>
-      </SlideIn>
-    </div>
+      {mostrarConfirmacao && (
+        <ModalConfirmacao isOpen={mostrarConfirmacao} onConfirm={handleDelete} isCritical={true} title="Excluir Projeto" message={
+            <>tem certeza que deseja excluir o projeto <span className="text-white font-black underline">{projeto?.nome}</span>?</>
+        } onClose={() => setMostrarConfirmacao(false)} />
+      )}
+    </>
   );
 }

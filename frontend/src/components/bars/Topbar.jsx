@@ -13,17 +13,16 @@ export default function Topbar({ onLogout }) {
   const [resultados, setResultados] = useState([]);
   const [mostrarResultados, setMostrarResultados] = useState(false);
   const [nomeExibicao, setNomeExibicao] = useState("carregando..."); 
-  
-  // guardamos o id do personal para usar nas rotas
   const [idPersonal, setIdPersonal] = useState(null);
 
   const menuRef = useRef(null);
   const buscaRef = useRef(null);
 
+  // 1. busca dados do personal e define o ID
   useEffect(() => {
     const idLogado = localStorage.getItem("userId");
     if (idLogado) {
-      setIdPersonal(idLogado); // salva o id para as rotas
+      setIdPersonal(idLogado);
       fetch(`http://localhost:3000/personais/${idLogado}`)
         .then((res) => res.json())
         .then((data) => {
@@ -36,18 +35,42 @@ export default function Topbar({ onLogout }) {
     }
   }, []);
 
+  // 2. busca alunos e exercicios (filtrados pelo personal logado)
   useEffect(() => {
-    fetch(`http://localhost:3000/alunos`)
+    if (!idPersonal) return; // Só busca se tiver o ID
+
+    // CORREÇÃO: busca alunos filtrando pelo idPersonal
+    fetch(`http://localhost:3000/alunos?fk_personal=${idPersonal}`)
       .then((res) => res.json())
-      .then((data) => setAlunos(data))
+      .then((data) => {
+        // Tratamento robusto: verifica se é array direto ou objeto { alunos: [...] }
+        if (Array.isArray(data)) {
+          setAlunos(data);
+        } else if (data && data.alunos && Array.isArray(data.alunos)) {
+          setAlunos(data.alunos);
+        } else {
+          setAlunos([]);
+        }
+      })
       .catch((err) => console.error("erro ao buscar alunos:", err));
 
-    fetch(`http://localhost:3000/exercicios`)
+    // busca exercicios passando o idPersonal como query param
+    fetch(`http://localhost:3000/exercicios?fk_personal=${idPersonal}`)
       .then((res) => res.json())
-      .then((data) => setExercicios(data))
+      .then((data) => {
+        if (data && data.treinos && Array.isArray(data.treinos)) {
+          setExercicios(data.treinos);
+        } else if (Array.isArray(data)) {
+          setExercicios(data);
+        } else {
+          setExercicios([]);
+        }
+      })
       .catch((err) => console.error("erro ao buscar exercicios:", err));
-  }, []);
 
+  }, [idPersonal]); 
+
+  // 3. lógica de filtragem da busca
   useEffect(() => {
     if (busca.trim() === "") {
       setResultados([]);
@@ -57,16 +80,20 @@ export default function Topbar({ onLogout }) {
     const termo = busca.toLowerCase();
 
     const alunosFiltrados = alunos
-      .filter((aluno) => aluno.nome.toLowerCase().includes(termo))
+      .filter((aluno) => aluno.nome && aluno.nome.toLowerCase().includes(termo))
       .map((aluno) => ({ ...aluno, tipo: "aluno" }));
 
     const exerciciosFiltrados = exercicios
-      .filter((ex) => ex.nome.toLowerCase().includes(termo))
+      .filter((ex) => {
+        const nomeAlvo = (ex.nome || ex.titulo || "").toLowerCase();
+        return nomeAlvo.includes(termo);
+      })
       .map((ex) => ({ ...ex, tipo: "exercicio" }));
 
     setResultados([...alunosFiltrados, ...exerciciosFiltrados]);
   }, [busca, alunos, exercicios]);
 
+  // 4. fechar menus ao clicar fora
   useEffect(() => {
     function handleClickOutside(event) {
       if (menuRef.current && !menuRef.current.contains(event.target)) setMenuAberto(false);
@@ -95,18 +122,18 @@ export default function Topbar({ onLogout }) {
         </div>
 
         {mostrarResultados && busca.length > 0 && (
-          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-blue-900/10 overflow-hidden z-50 animate-in fade-in slide-in-from-top-2">
+          <div className="absolute top-full left-0 right-0 mt-2 bg-white border border-gray-100 rounded-2xl shadow-2xl shadow-blue-900/10 overflow-hidden z-50">
             <div className="max-h-64 overflow-y-auto p-2">
               {resultados.length > 0 ? (
                 resultados.map((item) => {
-                  // lógica para definir o link baseado no tipo e no personal logado
+                  const idItem = item._id || item.id;
                   const rotaDestino = item.tipo === "aluno" 
-                    ? `/${idPersonal}/alunos/${item._id}` 
-                    : `/${idPersonal}/exercicios/${item._id}`;
+                    ? `/${idPersonal}/alunos/${idItem}` 
+                    : `/${idPersonal}/exercicios/${idItem}`;
 
                   return (
                     <Link
-                      key={`${item.tipo}-${item._id}`}
+                      key={`${item.tipo}-${idItem}`}
                       to={rotaDestino}
                       onClick={() => { 
                         setBusca(""); 
@@ -122,7 +149,7 @@ export default function Topbar({ onLogout }) {
 
                       <div>
                         <p className="text-[11px] font-black text-gray-900 uppercase tracking-tighter">
-                          {item.nome}
+                          {item.nome || item.titulo}
                         </p>
                         <p className="text-[8px] text-gray-400 font-bold uppercase tracking-widest">
                           {item.tipo === "aluno" ? "acessar perfil" : "ver exercício"}
@@ -163,7 +190,7 @@ export default function Topbar({ onLogout }) {
           </button>
 
           {menuAberto && (
-            <div className="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl py-2 animate-in fade-in zoom-in-95">
+            <div className="absolute right-0 mt-3 w-48 bg-white border border-gray-100 rounded-2xl shadow-2xl py-2">
               <Link 
                 to="/profile" 
                 onClick={() => setMenuAberto(false)}

@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { FaChevronDown } from "react-icons/fa";
 
-export default function SelectPersonalizado({ label, options, value, onChange, placeholder }) {
+export default function SelectPersonalizado({ label, options, value, onChange, placeholder, className }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
 
@@ -18,10 +18,10 @@ export default function SelectPersonalizado({ label, options, value, onChange, p
   const selectedOption = options.find((opt) => opt.value === value);
 
   return (
-    // w-fit faz o componente ter apenas o tamanho do conteúdo
-    <div className="relative space-y-1 w-fit min-w-[140px]" ref={dropdownRef}>
+    // agora o container pai pode ser controlado por quem o chama através do className
+    <div className={`relative space-y-1 ${className || "w-fit min-w-[140px]"}`} ref={dropdownRef}>
       {label && (
-        <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">
+        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
           {label}
         </label>
       )}
@@ -29,11 +29,12 @@ export default function SelectPersonalizado({ label, options, value, onChange, p
       <button
         type="button"
         onClick={() => setIsOpen(!isOpen)}
-        className={`flex items-center gap-3 bg-gray-50 border-none rounded-xl px-4 py-2.5 text-xs font-light transition-all ${
+        // padding py-4 para igualar aos inputs e w-full para preencher o container do DDI
+        className={`flex items-center justify-between w-full bg-gray-50 border-2 border-transparent rounded-2xl px-4 py-4 text-xs font-bold transition-all ${
           isOpen ? "ring-2 ring-blue-600/20 bg-white shadow-sm" : ""
         }`}
       >
-        <span className={selectedOption ? "text-gray-400 uppercase" : "text-gray-400"}>
+        <span className={selectedOption ? "text-black-600 uppercase" : "text-gray-400 font-normal"}>
           {selectedOption ? selectedOption.label : placeholder}
         </span>
         <FaChevronDown className={`text-gray-300 transition-transform ${isOpen ? "rotate-180" : ""}`} size={10} />
@@ -41,7 +42,7 @@ export default function SelectPersonalizado({ label, options, value, onChange, p
 
       {isOpen && (
         <div className="absolute z-[70] mt-1 min-w-full w-max max-w-[250px] bg-white rounded-xl shadow-xl border border-gray-100 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-          <div className="max-h-60 overflow-y-auto">
+          <div className="max-h-60 overflow-y-auto font-montserrat">
             {options.map((option) => (
               <button
                 key={option.value}
@@ -50,12 +51,12 @@ export default function SelectPersonalizado({ label, options, value, onChange, p
                   onChange(option.value);
                   setIsOpen(false);
                 }}
-                className={`w-full text-left px-4 py-3 text-[11px] font-bold transition-colors border-b border-gray-50 last:border-none flex items-center justify-between gap-4 ${
+                className={`w-full text-left px-4 py-3 text-[10px] font-black transition-colors border-b border-gray-50 last:border-none flex items-center justify-between gap-4 ${
                   value === option.value ? "bg-blue-50 text-blue-600" : "text-gray-600 hover:bg-gray-50"
                 }`}
               >
                 <span className="uppercase whitespace-nowrap">{option.label}</span>
-                {value === option.value && <div className="w-1 h-1 rounded-full bg-blue-600" />}
+                {value === option.value && <div className="w-1.5 h-1.5 rounded-full bg-blue-600" />}
               </button>
             ))}
           </div>

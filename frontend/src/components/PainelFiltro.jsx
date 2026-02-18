@@ -1,4 +1,4 @@
-import { FaTimes, FaCheck, FaSortAlphaDown, FaClock } from "react-icons/fa";
+import { FaTimes, FaCheck, FaSortAlphaDown, FaClock, FaBullseye } from "react-icons/fa";
 import { useEffect } from "react";
 import SlideIn from "./SlideIn";
 
@@ -19,14 +19,6 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
     { id: 'A', label: 'ativo' },
     { id: 'S', label: 'suspenso' },
     { id: 'C', label: 'cancelado' }
-  ];
-
-  // Opções reduzidas para o essencial
-  const objetivoOptions = [
-    { id: 'hipertrofia', label: 'hipertrofia' },
-    { id: 'definicao', label: 'definição' },
-    { id: 'emagrecimento', label: 'emagrecimento' },
-    { id: 'outro', label: 'outro' }
   ];
 
   const sortOptions = [
@@ -78,7 +70,7 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
 
             <div className="flex-1 overflow-y-auto p-6 space-y-7">
               
-              {/* nova seção: ordenação */}
+              {/* ordenação */}
               <div className="space-y-3">
                 <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
                   Ordenar por
@@ -99,6 +91,21 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
                     </button>
                   ))}
                 </div>
+              </div>
+
+              {/* objetivo (input de texto) */}
+              <div className="space-y-3">
+                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest flex items-center gap-2">
+                  <FaBullseye size={10} className="text-gray-400" />
+                  Objetivo Específico
+                </label>
+                <input 
+                  type="text"
+                  placeholder="Ex: Ganho de massa, TAF..."
+                  value={filters.objetivo || ''}
+                  onChange={(e) => setFilters({ ...filters, objetivo: e.target.value })}
+                  className="w-full bg-gray-50 border-2 border-gray-100 rounded-xl px-4 py-3 text-xs font-medium focus:border-blue-600 outline-none transition-all"
+                />
               </div>
 
               {/* faixa etária */}
@@ -148,34 +155,12 @@ export default function PainelFiltro({ isOpen, onClose, onApply, filters, setFil
                 </div>
               </div>
 
-              {/* objetivo reduzido */}
-              <div className="space-y-3">
-                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
-                  Objetivo
-                </label>
-                <div className="flex flex-wrap gap-2">
-                  {objetivoOptions.map((opt) => {
-                    const isSelected = filters.objetivo?.includes(opt.id);
-                    return (
-                      <button
-                        key={opt.id}
-                        onClick={() => toggleSelect('objetivo', opt.id)}
-                        className={`px-4 py-2.5 rounded-xl border-2 transition-all text-[10px] font-black uppercase tracking-tight ${
-                          isSelected ? "border-black bg-black text-white" : "border-gray-50 bg-gray-50 text-gray-500"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
             </div>
 
             <div className="p-6 bg-white border-t border-gray-100 grid grid-cols-2 gap-3">
               <button 
                 onClick={() => {
-                  const reset = { status: [], objetivo: [], idade: { min: '', max: '' }, ordem: 'nome' };
+                  const reset = { status: [], objetivo: '', idade: { min: '', max: '' }, ordem: 'nome' };
                   setFilters(reset);
                   onApply(reset);
                 }}

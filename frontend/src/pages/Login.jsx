@@ -1,15 +1,26 @@
 import { useState, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import bcrypt from "bcryptjs";
 import logo from "../assets/HP.png";
 import { FaEye, FaEyeSlash, FaSpinner, FaLock, FaEnvelope } from "react-icons/fa";
 
 export default function Login({ onLogin }) {
+  const location = useLocation();
   const [email, setEmail] = useState("");
   const [senha, setSenha] = useState("");
   const [erro, setErro] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [verSenha, setVerSenha] = useState(false);
+
+  // Captura os dados vindos do Register.jsx
+  useEffect(() => {
+    if (location.state?.emailPreenchido) {
+      setEmail(location.state.emailPreenchido);
+    }
+    if (location.state?.senhaPreenchida) {
+      setSenha(location.state.senhaPreenchida);
+    }
+  }, [location.state]);
 
   useEffect(() => {
     if (erro) setErro("");
@@ -55,7 +66,6 @@ export default function Login({ onLogin }) {
         <div className="w-full max-w-sm">
           
           <div className="flex flex-col items-center mb-6 text-center">
-             {/* LOGO REDUZIDA */}
             <img 
               src={logo} 
               alt="HP Athlet" 
@@ -120,7 +130,7 @@ export default function Login({ onLogin }) {
             </div>
 
             {erro && (
-              <div className="bg-red-50 text-red-500 p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100">
+              <div className="bg-red-50 text-red-500 p-3 rounded-2xl text-[10px] font-black uppercase tracking-widest border border-red-100 animate-in fade-in zoom-in duration-200">
                 {erro}
               </div>
             )}

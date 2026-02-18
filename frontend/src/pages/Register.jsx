@@ -37,6 +37,7 @@ export default function Register() {
     try {
       const checkResponse = await fetch("http://localhost:3000/personais");
       const usuarios = await checkResponse.json();
+      
       if (usuarios.some((user) => user.email.toLowerCase() === email.toLowerCase())) {
         showAlert("este e-mail já está cadastrado", "error");
         setSubmitting(false);
@@ -51,8 +52,15 @@ export default function Register() {
       });
 
       if (!response.ok) throw new Error();
-      showAlert("conta criada com sucesso!", "success");
-      setTimeout(() => navigate("/login"), 2000);
+
+      // Redireciona imediatamente enviando os dados via state
+      navigate("/login", { 
+        state: { 
+          emailPreenchido: email, 
+          senhaPreenchida: senha 
+        } 
+      });
+
     } catch (err) {
       showAlert("erro na conexão.", "error");
       setSubmitting(false);
@@ -63,12 +71,10 @@ export default function Register() {
     <div className="h-screen flex bg-white w-full overflow-hidden font-sans">
       <Alert message={alert.message} type={alert.type} />
 
-      {/* LADO ESQUERDO: FORMULÁRIO */}
       <div className="w-full md:w-1/2 flex items-start justify-center pt-4 md:pt-8 px-8">
         <div className="w-full max-w-sm">
           
           <div className="flex flex-col items-center mb-4 text-center">
-             {/* LOGO REDUZIDA */}
             <img 
               src={logo} 
               alt="HP Athlet" 
@@ -221,7 +227,6 @@ export default function Register() {
         </div>
       </div>
 
-      {/* LADO DIREITO: IMAGEM */}
       <div className="hidden md:block md:w-1/2 relative bg-gray-900">
         <img 
           src="https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?q=80&w=1469&auto=format&fit=crop" 

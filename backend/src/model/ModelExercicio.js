@@ -9,6 +9,9 @@ const ExercicioSchema = new mongoose.Schema({
     type: String,
     required: true
   },
+  equipamento:{
+    type: String,
+  },
   descricao: {
     type: String
   },

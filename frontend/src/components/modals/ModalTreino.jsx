@@ -1,123 +1,164 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import SlideIn from "../SlideIn";
+import ModalConfirmacao from "./ModalConfirmacao";
+import { 
+  FaDumbbell, FaStickyNote, 
+  FaCalendarDay, FaCheck, FaTimes, FaTrashAlt 
+} from "react-icons/fa";
 
-export default function ModalNovoTreino({
-  projetoId,
-  personalId,
-  onClose,
-  onCreated
-}) {
+export default function ModalTreino({ projetoId, personalId, treino = null, onClose, onCreated }) {
+  const [loading, setLoading] = useState(false);
+  const [erro, setErro] = useState("");
+  const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
+  
+  const diasDaSemana = ["SEG", "TER", "QUA", "QUI", "SEX", "SAB", "DOM"];
+
   const [form, setForm] = useState({
     nome: "",
-    objetivo: "",
     observacoes: "",
-    ordem: ""
+    dia_semana: [] 
   });
-  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (treino) {
+      setForm({
+        nome: treino.nome || "",
+        observacoes: treino.observacoes || "",
+        dia_semana: Array.isArray(treino.dia_semana) ? treino.dia_semana : [treino.dia_semana]
+      });
+    }
+  }, [treino]);
 
   function handleChange(e) {
     setForm({ ...form, [e.target.name]: e.target.value });
+    if (erro) setErro(""); 
   }
 
-  async function handleCriar() {
-    if (!form.nome.trim()) {
-      alert("Informe o nome do treino");
-      return; 
-    }
-    if (!form.nome.trim()) {
-      alert("Informe a ordem do treino")
-      return 
-    }
+  const toggleDia = (dia) => {
+    setErro("");
+    setForm(prev => {
+      const selecionados = prev.dia_semana.includes(dia)
+        ? prev.dia_semana.filter(d => d !== dia)
+        : [...prev.dia_semana, dia];
+      return { ...prev, dia_semana: selecionados };
+    });
+  };
 
+  async function handleSalvar() {
+    if (!form.nome.trim()) return setErro("o nome do treino é obrigatório");
+    if (form.dia_semana.length === 0) return setErro("selecione pelo menos um dia");
+    
+    const isEdicao = !!treino;
+    const url = isEdicao 
+      ? `http://localhost:3000/treinos/${treino._id}` 
+      : "http://localhost:3000/treinos";
+    
     try {
       setLoading(true);
-      const res = await fetch("http://localhost:3000/treinos", {
-        method: "POST",
+      const res = await fetch(url, {
+        method: isEdicao ? "PUT" : "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          nome: form.nome,
-          objetivo:form.objetivo,
-          observacoes: form.observacoes,
+          ...form,
           fk_projeto: projetoId,
-          fk_personal: personalId,
-          ordem: Number(form.ordem)
+          fk_personal: personalId
         })
       });
 
-      if (!res.ok) throw new Error("Erro ao criar treino");
+      if (!res.ok) {
+        const errorData = await res.json().catch(() => ({}));
+        throw new Error(errorData.message || "erro ao salvar treino");
+      }
 
-      const treino = await res.json();
-
-      onCreated(treino); // atualiza lista
+      const data = await res.json();
+      onCreated(data); 
       onClose();
     } catch (err) {
-      console.error(err);
-      alert("Erro ao criar treino");
+      setErro(err.message);
     } finally {
       setLoading(false);
     }
   }
 
-   return (
-    <div className="fixed inset-0 bg-black/40 flex items-center justify-center z-50">
-      <div className="bg-white rounded-xl w-full max-w-md p-6">
-        <h2 className="text-xl font-bold mb-4">Novo treino</h2>
+  async function handleDeletar() {
+    try {
+      setLoading(true);
+      const res = await fetch(`http://localhost:3000/treinos/${treino._id}`, { method: "DELETE" });
+      if (!res.ok) throw new Error();
+      onCreated(); 
+      onClose();
+    } catch (err) {
+      setErro("erro ao excluir treino");
+    } finally {
+      setLoading(false);
+    }
+  }
 
-        {/* Nome */}
-        <input
-        type="text"
-          name="nome"
-          placeholder="Nome do treino"
-          value={form.nome}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-3 py-2 mb-3"
-        />
+  return (
+    <>
+      <div className="fixed inset-0 bg-black/60 z-[60] flex items-end md:items-center justify-center p-0 md:p-4" onClick={onClose}>
+        <SlideIn from="bottom">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-6 md:p-10 shadow-2xl relative">
+            <div className="flex justify-between items-center mb-8">
+              <h2 className="text-xl md:text-2xl font-[1000] text-gray-900 uppercase italic tracking-tighter">
+                {treino ? "editar" : "novo"} <span className="text-blue-600">treino_</span>
+              </h2>
+              <div className="flex items-center gap-4">
+                {treino && (
+                  <button onClick={() => setMostrarConfirmacao(true)} className="text-gray-300 hover:text-red-500 p-2">
+                    <FaTrashAlt size={16} />
+                  </button>
+                )}
+                <button onClick={onClose} className="text-gray-400 hover:text-black"><FaTimes size={20} /></button>
+              </div>
+            </div>
 
-        {/* Objetivo */}
-        <input
-          name="objetivo"
-          placeholder="Objetivo (opcional)"
-          value={form.objetivo}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-3 py-2 mb-3"
-        />
+            <div className="space-y-6">
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaDumbbell size={10} /> nome do treino
+                </label>
+                <input name="nome" value={form.nome} onChange={handleChange} placeholder="Ex: Pull Day" className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all" />
+              </div>
 
-        {/* Observações */}
-        <textarea
-          name="observacoes"
-          placeholder="Observações (opcional)"
-          value={form.observacoes}
-          onChange={handleChange}
-          className="w-full border rounded-lg px-3 py-2 mb-4 resize-none"
-          rows={3}
-        />
+              <div className="space-y-3">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaCalendarDay size={10} /> dias da semana
+                </label>
+                <div className="flex flex-wrap md:flex-nowrap gap-1.5 justify-between bg-gray-50/50 p-2 rounded-2xl border border-gray-100">
+                  {diasDaSemana.map(dia => (
+                    <button key={dia} type="button" onClick={() => toggleDia(dia)}
+                      className={`flex-1 min-w-[42px] py-2 px-1 rounded-xl text-[9px] font-[1000] transition-all border-2 ${form.dia_semana.includes(dia) ? "bg-blue-600 border-blue-600 text-white shadow-md shadow-blue-200" : "bg-white border-transparent text-gray-400 hover:border-gray-200"}`}>
+                      {dia}
+                    </button>
+                  ))}
+                </div>
+              </div>
 
-        {/* Ordem */}
-        <input 
-          type="number" 
-          name="ordem" 
-          placeholder="Ordem do treino" 
-          value={form.ordem} 
-          onChange={handleChange} 
-          className="w-full border rounded-lg px-3 py-2 mb-4" />
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaStickyNote size={10} /> observações
+                </label>
+                <textarea name="observacoes" value={form.observacoes} onChange={handleChange} placeholder="Detalhes..." rows={3} className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-3xl px-5 py-4 text-xs font-bold outline-none transition-all resize-none" />
+              </div>
 
-        <div className="flex justify-end gap-2">
-          <button
-            onClick={onClose}
-            className="px-4 py-2 text-gray-600"
-            disabled={loading}
-          >
-            Cancelar
-          </button>
+              {erro && <p className="text-[10px] font-black text-red-500 uppercase tracking-widest text-center animate-pulse pt-2">{erro}</p>}
+            </div>
 
-          <button
-            onClick={handleCriar}
-            disabled={loading}
-            className="px-4 py-2 bg-indigo-600 text-white rounded-lg"
-          >
-            {loading ? "Criando..." : "Criar treino"}
-          </button>
-        </div>
+            <div className="mt-10">
+              <button disabled={loading} onClick={handleSalvar} className={`w-full py-5 rounded-2xl text-[11px] font-[1000] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${loading ? "bg-gray-100 text-gray-300" : "bg-black text-white hover:bg-blue-600"}`}>
+                {loading ? <span className="animate-pulse">processando...</span> : <><FaCheck size={12} /> {treino ? "atualizar" : "salvar"} treino</>}
+              </button>
+            </div>
+          </div>
+        </SlideIn>
       </div>
-    </div>
+
+      {mostrarConfirmacao && (
+        <ModalConfirmacao isOpen={mostrarConfirmacao} onConfirm={handleDeletar} isCritical={true} title="Excluir Treino" 
+          message={<>tem certeza que deseja excluir o treino <span className="text-white font-black underline">{form.nome}</span>?</>}
+          onClose={() => setMostrarConfirmacao(false)} />
+      )}
+    </>
   );
 }

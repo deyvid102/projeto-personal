@@ -14,66 +14,56 @@ import { usePagination } from "../components/hooks/usePagination";
 import { useAlert } from "../components/hooks/useAlert"; 
 
 // --- ícones ---
-import { FaEdit, FaFilter, FaSearch, FaUserPlus } from "react-icons/fa";
+import { FaEdit, FaFilter, FaSearch, FaUserPlus, FaUsersSlash } from "react-icons/fa";
 
 export default function Alunos() {
-  // =========================================================
-  // estados de dados e interface
-  // =========================================================
-  const [alunos, setAlunos] = useState([]);                 // dados brutos vindos da api
-  const [alunosFiltrados, setAlunosFiltrados] = useState([]); // dados após busca e filtros
+  const [alunos, setAlunos] = useState([]);
+  const [alunosFiltrados, setAlunosFiltrados] = useState([]);
   const [nomePersonal, setNomePersonal] = useState("personal");
   const [loading, setLoading] = useState(true);
   const [busca, setBusca] = useState("");
 
-  // =========================================================
-  // estados de controle de modais/painéis
-  // =========================================================
   const [mostrarModal, setMostrarModal] = useState(false);
   const [mostrarPainel, setMostrarPainel] = useState(false);
   const [mostrarConfirmacao, setMostrarConfirmacao] = useState(false);
   const [alunoEditando, setAlunoEditando] = useState(null);
   const [alunoParaDeletar, setAlunoParaDeletar] = useState(null);
 
-  // =========================================================
-  // lógica de filtros e ordenação
-  // =========================================================
   const [filtrosTemporarios, setFiltrosTemporarios] = useState({ 
-    status: [], objetivo: [], idade: { min: "", max: "" }, ordem: "nome"
+    status: [], objetivo: "", idade: { min: "", max: "" }, ordem: "nome"
   });
   const [filtrosAplicados, setFiltrosAplicados] = useState({ 
-    status: [], objetivo: [], idade: { min: "", max: "" }, ordem: "nome"
+    status: [], objetivo: "", idade: { min: "", max: "" }, ordem: "nome"
   });
 
-  // =========================================================
-  // hooks de navegação e utilitários
-  // =========================================================
   const { personalId } = useParams(); 
   const navigate = useNavigate();
   const [searchParams] = useSearchParams();
   const { alert, showAlert } = useAlert(2000);
   
-  // hook de paginação: gerencia a quebra da lista em páginas de 30 itens
   const { currentData, currentPage, totalPages, goToPage, totalItems } = usePagination(alunosFiltrados, 30);
 
-  // =========================================================
-  // funções de formatação e auxílio
-  // =========================================================
-  
-  /**
-   * converte o slug do banco para um nome legível na etiqueta do card.
-   * agora inclui a lógica de "outro" para objetivos customizados.
-   */
+  const calcularIdade = (dataNascimento) => {
+    if (!dataNascimento) return null;
+    const hoje = new Date();
+    const nascimento = new Date(dataNascimento);
+    let idade = hoje.getFullYear() - nascimento.getFullYear();
+    const mes = hoje.getMonth() - nascimento.getMonth();
+    
+    if (mes < 0 || (mes === 0 && hoje.getDate() < nascimento.getDate())) {
+      idade--;
+    }
+    return idade;
+  };
+
   const formatarObjetivo = (texto) => {
     if (!texto) return "GERAL";
     const mapa = {
       "manutencao": "manutenção", "emagrecimento": "emagrecimento",
       "hipertrofia": "hipertrofia", "definicao": "definição",
-      "saude": "saúde", "reabilitacao": "reabilitação",
-      "outro": "outro"
+      "saude": "saúde", "reabilitacao": "reabilitação"
     };
-    const traduzido = mapa[texto.toLowerCase()] || texto;
-    return traduzido.toUpperCase();
+    return (mapa[texto.toLowerCase()] || texto).toUpperCase();
   };
 
   const getStatusLabel = (code) => {
@@ -88,11 +78,6 @@ export default function Alunos() {
     return novaLista;
   };
 
-  // =========================================================
-  // efeitos (side effects)
-  // =========================================================
-
-  // busca inicial: carrega alunos e dados do personal
   useEffect(() => {
     async function buscarDados() {
       try {
@@ -100,15 +85,13 @@ export default function Alunos() {
         const dataAlunos = await resAlunos.json();
         setAlunos(aplicarOrdenacao(dataAlunos, "nome"));
 
-        // verifica se há filtros vindo diretamente pela url (ex: dashboard)
         const statusUrl = searchParams.get("status");
         if (statusUrl) {
-          const filtroInicial = { status: [statusUrl], objetivo: [], idade: { min: "", max: "" }, ordem: "nome" };
+          const filtroInicial = { status: [statusUrl], objetivo: "", idade: { min: "", max: "" }, ordem: "nome" };
           setFiltrosAplicados(filtroInicial);
           setFiltrosTemporarios(filtroInicial);
         }
 
-        // carrega nome formatado do personal logado
         const idLogado = localStorage.getItem("userId");
         if (idLogado) {
           const resPersonal = await fetch(`http://localhost:3000/personais/${idLogado}`);
@@ -129,7 +112,6 @@ export default function Alunos() {
     buscarDados();
   }, [personalId, searchParams]);
 
-  // motor de filtragem: roda sempre que a busca, filtros ou lista base mudarem
   useEffect(() => {
     let result = alunos.filter(a => a.nome.toLowerCase().includes(busca.toLowerCase()));
     
@@ -137,26 +119,27 @@ export default function Alunos() {
       result = result.filter(a => filtrosAplicados.status.includes(a.status));
     }
     
-    if (filtrosAplicados.objetivo.length > 0) {
-      const padroes = ['emagrecimento', 'definicao', 'hipertrofia'];
-      result = result.filter(a => {
-        const objAluno = a.objetivo?.toLowerCase();
-        if (filtrosAplicados.objetivo.includes('outro')) {
-          return !padroes.includes(objAluno) || filtrosAplicados.objetivo.includes(objAluno);
-        }
-        return filtrosAplicados.objetivo.includes(objAluno);
-      });
+    if (filtrosAplicados.objetivo && filtrosAplicados.objetivo.trim() !== "") {
+      const termo = filtrosAplicados.objetivo.toLowerCase();
+      result = result.filter(a => a.objetivo?.toLowerCase().includes(termo));
     }
 
-    if (filtrosAplicados.idade?.min) result = result.filter(a => (a.idade || 0) >= parseInt(filtrosAplicados.idade.min));
-    if (filtrosAplicados.idade?.max) result = result.filter(a => (a.idade || 0) <= parseInt(filtrosAplicados.idade.max));
+    if (filtrosAplicados.idade?.min) {
+      result = result.filter(a => {
+        const idade = calcularIdade(a.dataNascimento);
+        return idade >= parseInt(filtrosAplicados.idade.min);
+      });
+    }
+    if (filtrosAplicados.idade?.max) {
+      result = result.filter(a => {
+        const idade = calcularIdade(a.dataNascimento);
+        return idade <= parseInt(filtrosAplicados.idade.max);
+      });
+    }
     
     setAlunosFiltrados(aplicarOrdenacao(result, filtrosAplicados.ordem));
   }, [busca, filtrosAplicados, alunos]);
 
-  // =========================================================
-  // handlers de ações
-  // =========================================================
   const handleDeletarAluno = async () => {
     if (!alunoParaDeletar) return;
     try {
@@ -170,9 +153,6 @@ export default function Alunos() {
     }
   };
 
-  // =========================================================
-  // renderização de sub-componentes
-  // =========================================================
   const renderStatus = (status) => {
     const configs = {
       'A': { label: 'ativo', color: 'bg-green-500', text: 'text-green-600' },
@@ -190,14 +170,45 @@ export default function Alunos() {
 
   if (loading) return null;
 
-  // =========================================================
-  // template principal (jsx)
-  // =========================================================
+  // --- Tela de Estado Vazio (Nenhum aluno cadastrado) ---
+  if (alunos.length === 0) {
+    return (
+      <div className="w-full min-h-[80vh] flex flex-col items-center justify-center p-4">
+        <Alert message={alert.message} type={alert.type} />
+        <div className="w-24 h-24 bg-gray-50 rounded-[2.5rem] flex items-center justify-center text-gray-200 mb-6 shadow-inner">
+          <FaUsersSlash size={40} />
+        </div>
+        <div className="text-center space-y-2 mb-10">
+          <h2 className="text-2xl font-black text-gray-900 uppercase italic tracking-tighter">Nenhum aluno por aqui</h2>
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">Sua lista está vazia. Comece cadastrando um novo aluno.</p>
+        </div>
+        <button 
+          onClick={() => { setAlunoEditando(null); setMostrarModal(true); }}
+          className="group flex items-center gap-3 bg-gray-900 hover:bg-blue-600 text-white px-8 py-4 rounded-2xl shadow-xl transition-all active:scale-95"
+        >
+          <FaUserPlus size={18} />
+          <span className="text-xs font-black uppercase tracking-widest">Cadastrar Primeiro Aluno</span>
+        </button>
+
+        {mostrarModal && (
+          <ModalAluno 
+            aluno={null} 
+            showAlert={showAlert} 
+            onClose={() => setMostrarModal(false)}
+            onSave={(alunoSalvo) => {
+              setAlunos([alunoSalvo]);
+              setMostrarModal(false);
+            }}
+          />
+        )}
+      </div>
+    );
+  }
+
   return (
     <div className="w-full pb-20">
       <Alert message={alert.message} type={alert.type} />
 
-      {/* header: título, nome do personal e busca rápida */}
       <header className="px-4 md:px-0 mt-6 md:mt-12 mb-6 flex flex-col md:flex-row md:items-center md:justify-between gap-4">
         <div>
           <div className="flex items-center gap-3 mb-1 overflow-visible">
@@ -216,7 +227,6 @@ export default function Alunos() {
           </div>
         </div>
 
-        {/* controles de ação */}
         <div className="flex items-center gap-2 w-full md:w-auto">
           <div className="relative flex-1 md:flex-none">
             <FaSearch className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-300 size-3" />
@@ -226,7 +236,8 @@ export default function Alunos() {
               className="bg-gray-50 border-none rounded-xl py-2.5 md:py-3 pl-9 md:pl-10 pr-4 text-[11px] font-bold w-full md:w-64 outline-none focus:ring-2 focus:ring-blue-600/10 transition-all"
             />
           </div>
-          <button onClick={() => setMostrarPainel(true)} className={`p-3 md:p-3.5 rounded-xl transition-all ${filtrosAplicados.status.length > 0 || filtrosAplicados.objetivo.length > 0 ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-50 text-gray-400"}`}>
+          <button onClick={() => setMostrarPainel(true)} 
+            className={`p-3 md:p-3.5 rounded-xl transition-all ${filtrosAplicados.status.length > 0 || filtrosAplicados.objetivo !== "" ? "bg-blue-600 text-white shadow-lg shadow-blue-200" : "bg-gray-50 text-gray-400"}`}>
             <FaFilter size={14} />
           </button>
           <button onClick={() => { setAlunoEditando(null); setMostrarModal(true); }} className="bg-black hover:bg-blue-600 text-white p-3 md:p-3.5 rounded-xl shadow-lg active:scale-95 transition-transform">
@@ -235,48 +246,59 @@ export default function Alunos() {
         </div>
       </header>
 
-      {/* barra de filtros ativos */}
       <FiltrosAtivos 
         filtros={filtrosAplicados} 
         removerFiltro={(campo, valor) => {
-          const novos = { ...filtrosAplicados, [campo]: filtrosAplicados[campo].filter(v => v !== valor) };
-          setFiltrosAplicados(novos); setFiltrosTemporarios(novos);
+          const novos = { ...filtrosAplicados };
+          if (campo === 'objetivo') {
+            novos.objetivo = "";
+          } else if (campo === 'idade') {
+            novos.idade = { min: "", max: "" };
+          } else {
+            novos[campo] = filtrosAplicados[campo].filter(v => v !== valor);
+          }
+          setFiltrosAplicados(novos); 
+          setFiltrosTemporarios(novos);
         }} 
         limparTodos={() => {
-          const reset = { status: [], objetivo: [], idade: { min: "", max: "" }, ordem: "nome" };
-          setFiltrosAplicados(reset); setFiltrosTemporarios(reset);
+          const reset = { status: [], objetivo: "", idade: { min: "", max: "" }, ordem: "nome" };
+          setFiltrosAplicados(reset); 
+          setFiltrosTemporarios(reset);
         }}
         formatarObjetivo={formatarObjetivo}
         getStatusLabel={getStatusLabel}
       />
 
-      {/* grid de listagem de alunos */}
       <main className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2.5 px-4 md:px-0">
-        {currentData.map((aluno) => (
-          <div 
-            key={aluno._id}
-            onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
-            className={`bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col shadow-sm transition-all cursor-pointer ${aluno.status === 'C' ? 'opacity-50 grayscale' : ''}`}
-          >
-            {renderStatus(aluno.status)}
-            <h3 className="font-black text-gray-900 uppercase tracking-tighter text-[10px] leading-tight mb-0.5 truncate">{aluno.nome}</h3>
-            <span className="text-[9px] font-bold text-gray-400 uppercase mb-3">{aluno.idade ? `${aluno.idade} anos` : "-- anos"}</span>
-            <div className="mt-auto pt-2.5 border-t border-gray-50 flex items-center justify-between">
-              <span className="text-[7px] font-black text-blue-600/60 uppercase tracking-widest leading-none">{formatarObjetivo(aluno.objetivo)}</span>
-              <button onClick={(e) => { e.stopPropagation(); setAlunoEditando(aluno); setMostrarModal(true); }} className="text-gray-200 active:text-blue-600 transition-colors hover:text-blue-400">
-                <FaEdit size={15} />
-              </button>
+        {currentData.map((aluno) => {
+          const idadeCalculada = calcularIdade(aluno.dataNascimento);
+          
+          return (
+            <div 
+              key={aluno._id}
+              onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
+              className={`bg-white border border-gray-100 rounded-2xl p-3.5 flex flex-col shadow-sm transition-all cursor-pointer hover:shadow-md hover:border-blue-100 ${aluno.status === 'C' ? 'opacity-50 grayscale' : ''}`}
+            >
+              {renderStatus(aluno.status)}
+              <h3 className="font-black text-gray-900 uppercase tracking-tighter text-[10px] leading-tight mb-0.5 truncate">{aluno.nome}</h3>
+              <span className="text-[9px] font-bold text-gray-400 uppercase mb-3">
+                {idadeCalculada ? `${idadeCalculada} anos` : "-- anos"}
+              </span>
+              <div className="mt-auto pt-2.5 border-t border-gray-50 flex items-center justify-between">
+                <span className="text-[7px] font-black text-blue-600/60 uppercase tracking-widest leading-none truncate pr-2">{formatarObjetivo(aluno.objetivo)}</span>
+                <button onClick={(e) => { e.stopPropagation(); setAlunoEditando(aluno); setMostrarModal(true); }} className="text-gray-200 active:text-blue-600 transition-colors hover:text-blue-600">
+                  <FaEdit size={14} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </main>
 
-      {/* rodapé com paginação */}
       <footer className="mt-10 flex justify-center">
         <Pagination currentPage={currentPage} totalPages={totalPages} onPageChange={goToPage} totalItems={totalItems} />
       </footer>
 
-      {/* modais e painéis suspensos */}
       {mostrarModal && (
         <ModalAluno 
           aluno={alunoEditando} 

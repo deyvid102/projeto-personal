@@ -1,55 +1,136 @@
 import { useState, useEffect } from "react";
-import { FaDumbbell, FaLayerGroup, FaTrashAlt } from "react-icons/fa";
+import { FaTrashAlt, FaTimes, FaCheck, FaDumbbell, FaLayerGroup, FaTools, FaAlignLeft } from "react-icons/fa";
 import SlideIn from "../SlideIn";
 import SelectPersonalizado from "../SelectPersonalizado";
 import Alert from "../Alert"; 
-import ModalConfirmacao from "./ModalConfirmacao"; // Importando o novo modal
+import ModalConfirmacao from "./ModalConfirmacao";
 import { useAlert } from "../hooks/useAlert"; 
 
-export default function ModalExercicio({ onClose, onSave, onDelete, exercicioParaEditar }) {
+export default function ModalExercicio({ 
+  onClose, 
+  onSave, 
+  onDelete, 
+  exercicioParaEditar, 
+  nomeSugerido = "",
+  bibliotecaExistente = [] 
+}) {
   const storedUserId = localStorage.getItem("userId");
   const { alert, showAlert } = useAlert(2500);
-  
-  // Estado para controlar o modal de confirmação de exclusão
   const [showConfirmDelete, setShowConfirmDelete] = useState(false);
+  const [isSalvando, setIsSalvando] = useState(false);
+  const [equipamentoOutros, setEquipamentoOutros] = useState("");
+
+  const opcoesGrupos = [
+    { value: "peito", label: "peito" },
+    { value: "costas", label: "costas" },
+    { value: "pernas", label: "pernas" },
+    { value: "ombros", label: "ombros" },
+    { value: "braços", label: "braços" },
+    { value: "abdômen", label: "abdômen" },
+  ].sort((a, b) => a.label.localeCompare(b.label));
+
+  const opcoesEquipamentos = [
+    { value: "halteres", label: "halteres" },
+    { value: "barra", label: "barra" },
+    { value: "polia", label: "polia / cabo" },
+    { value: "maquina", label: "máquina" },
+    { value: "kettlebell", label: "kettlebell" },
+    { value: "peso_corporal", label: "peso corporal" },
+    { value: "elastico", label: "elástico" },
+    { value: "outros", label: "outros (especificar)" },
+  ].sort((a, b) => a.label.localeCompare(b.label));
 
   const [form, setForm] = useState({
     nome: "",
     grupoMuscular: "",
+    equipamento: "",
+    descricao: "",
     fk_personal: storedUserId,
     publico: false,
   });
 
-  const opcoesGrupos = [
-    { value: "peito", label: "PEITO" },
-    { value: "costas", label: "COSTAS" },
-    { value: "pernas", label: "PERNAS" },
-    { value: "ombros", label: "OMBROS" },
-    { value: "braços", label: "BRAÇOS" },
-    { value: "abdômen", label: "ABDÔMEN" },
-  ];
-
   useEffect(() => {
     if (exercicioParaEditar) {
+      // Verifica se o equipamento atual está na lista padrão
+      const ePadrao = opcoesEquipamentos.some(opt => opt.value === exercicioParaEditar.equipamento);
+      
       setForm({
         nome: exercicioParaEditar.nome || "",
         grupoMuscular: exercicioParaEditar.grupoMuscular || "",
+        equipamento: ePadrao ? (exercicioParaEditar.equipamento || "") : "outros",
+        descricao: exercicioParaEditar.descricao || "",
         fk_personal: storedUserId,
         publico: false,
       });
-    }
-  }, [exercicioParaEditar, storedUserId]);
 
-  const handleSave = () => {
-    if (!form.nome.trim()) {
+      if (!ePadrao && exercicioParaEditar.equipamento) {
+        setEquipamentoOutros(exercicioParaEditar.equipamento);
+      }
+    } else {
+      setForm({
+        nome: nomeSugerido || "",
+        grupoMuscular: "",
+        equipamento: "",
+        descricao: "",
+        fk_personal: storedUserId,
+        publico: false,
+      });
+      setEquipamentoOutros("");
+    }
+  }, [exercicioParaEditar, storedUserId, nomeSugerido]);
+
+  const handleSave = async () => {
+    const nomeNormalizado = String(form.nome || "").trim();
+
+    if (!nomeNormalizado) {
       showAlert("insira o nome do exercício", "warning");
       return;
     }
+
+    const jaExiste = bibliotecaExistente.some(ex => 
+      ex.nome.toLowerCase() === nomeNormalizado.toLowerCase() && 
+      ex._id !== (exercicioParaEditar?._id || exercicioParaEditar?.id)
+    );
+
+    if (jaExiste) {
+      showAlert("esse exercício já existe na sua biblioteca", "warning");
+      return;
+    }
+
     if (!form.grupoMuscular) {
       showAlert("selecione o grupo muscular", "warning");
       return;
     }
-    onSave(form); 
+
+    // Define o valor final do equipamento (se for outros, usa o texto digitado)
+    const equipamentoFinal = form.equipamento === "outros" ? equipamentoOutros : form.equipamento;
+    
+    try {
+      setIsSalvando(true);
+      const isEdicao = !!exercicioParaEditar;
+      const url = isEdicao 
+        ? `http://localhost:3000/exercicios/${exercicioParaEditar._id || exercicioParaEditar.id}`
+        : `http://localhost:3000/exercicios`;
+
+      const res = await fetch(url, {
+        method: isEdicao ? "PUT" : "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ 
+          ...form, 
+          nome: nomeNormalizado,
+          equipamento: equipamentoFinal 
+        }),
+      });
+
+      if (!res.ok) throw new Error("erro ao comunicar com servidor");
+
+      const exercicioSalvo = await res.json();
+      await onSave(exercicioSalvo); 
+    } catch (err) {
+      showAlert("erro ao salvar exercício", "error");
+    } finally {
+      setIsSalvando(false);
+    }
   };
 
   const handleConfirmDelete = () => {
@@ -60,105 +141,138 @@ export default function ModalExercicio({ onClose, onSave, onDelete, exercicioPar
     setShowConfirmDelete(false);
   };
 
-  const isInvalido = !form.nome.trim() || !form.grupoMuscular;
+  const isInvalido = !String(form.nome || "").trim() || !form.grupoMuscular || isSalvando;
 
   return (
     <>
-      <div 
-        className="fixed inset-0 bg-black/60 z-[60] flex items-end md:items-center justify-center p-0 md:p-4" 
-        onClick={onClose}
-      >
+      <div className="fixed inset-0 bg-black/60 z-[80] flex items-end md:items-center justify-center p-0 md:p-4" onClick={onClose}>
         <Alert message={alert.message} type={alert.type} />
 
         <SlideIn from="bottom">
           <div 
             onClick={(e) => e.stopPropagation()} 
-            className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-6 md:p-10 shadow-2xl relative"
+            className="bg-white rounded-t-[2.5rem] md:rounded-3xl w-full max-w-lg p-8 md:p-10 shadow-2xl relative flex flex-col max-h-[90vh] overflow-y-auto"
           >
-            {/* botão de lixeira que agora abre o modal de confirmação */}
-            {exercicioParaEditar && (
-              <button 
-                onClick={() => setShowConfirmDelete(true)}
-                className="absolute top-6 right-6 md:top-8 md:right-8 p-3 text-gray-300 hover:text-red-500 hover:bg-red-50 rounded-full transition-all flex items-center justify-center group z-10"
-                title="excluir exercício"
-              >
-                <FaTrashAlt size={18} className="group-hover:scale-110 transition-transform" />
+            <div className="absolute top-7 right-7 flex items-center gap-4">
+              {exercicioParaEditar && (
+                <button 
+                  type="button" 
+                  onClick={() => setShowConfirmDelete(true)} 
+                  className="text-gray-300 hover:text-red-500 transition-colors p-1"
+                >
+                  <FaTrashAlt size={16} />
+                </button>
+              )}
+              <button type="button" onClick={onClose} className="text-gray-400 hover:text-black transition-colors p-1">
+                <FaTimes size={20} />
               </button>
-            )}
+            </div>
 
-            <div className="mb-8 pr-12"> 
-              <h2 className="text-xl md:text-2xl font-black text-gray-900 uppercase tracking-tighter italic">
-                {exercicioParaEditar ? "editar" : "novo"} <span className="text-blue-600">exercício</span>
+            <div className="mb-8 pr-20">
+              <h2 className="text-xl md:text-2xl font-[1000] text-gray-900 uppercase italic tracking-tighter leading-none">
+                {exercicioParaEditar ? "editar" : "novo"} <span className="text-blue-600">exercício_</span>
               </h2>
-              <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest mt-1 ml-1">
-                biblioteca privada
-              </p>
+              <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 ml-1">biblioteca privada</p>
             </div>
 
-            <div className="space-y-6">
+            <div className="space-y-5">
+              {/* Nome */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">nome do exercício</label>
-                <div className="relative">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaDumbbell size={10} /> nome do exercício
+                </label>
+                <input
+                  type="text"
+                  value={form.nome}
+                  onChange={(e) => setForm(prev => ({ ...prev, nome: e.target.value }))}
+                  placeholder="ex: supino reto"
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all uppercase"
+                />
+              </div>
+
+              {/* Grupo Muscular */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaLayerGroup size={10} /> grupo muscular
+                </label>
+                <SelectPersonalizado 
+                  options={opcoesGrupos}
+                  value={form.grupoMuscular}
+                  onChange={(val) => setForm(prev => ({ ...prev, grupoMuscular: val }))}
+                  placeholder="selecione o grupo..."
+                />
+              </div>
+
+              {/* Equipamento */}
+              <div className="space-y-1">
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaTools size={10} /> equipamento
+                </label>
+                <SelectPersonalizado 
+                  options={opcoesEquipamentos}
+                  value={form.equipamento}
+                  onChange={(val) => setForm(prev => ({ ...prev, equipamento: val }))}
+                  placeholder="selecione o equipamento..."
+                />
+                
+                {form.equipamento === "outros" && (
                   <input
-                    value={form.nome}
-                    onChange={(e) => setForm({...form, nome: e.target.value})}
-                    placeholder="EX: SUPINO RETO"
-                    className="w-full bg-gray-50 border-none rounded-xl px-4 py-4 pl-12 text-xs font-bold uppercase focus:ring-2 focus:ring-blue-600/20 outline-none transition-all"
+                    type="text"
+                    value={equipamentoOutros}
+                    onChange={(e) => setEquipamentoOutros(e.target.value)}
+                    placeholder="digite o equipamento..."
+                    className="w-full mt-2 bg-blue-50/50 border-2 border-blue-100 rounded-2xl px-5 py-3 text-xs font-bold outline-none transition-all uppercase"
                   />
-                  <FaDumbbell className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300" size={14} />
-                </div>
+                )}
               </div>
 
+              {/* Descrição */}
               <div className="space-y-1">
-                <label className="text-[10px] font-bold text-gray-400 uppercase tracking-widest ml-1">grupo muscular</label>
-                <div className="relative">
-                  <div className="absolute left-4 top-1/2 -translate-y-1/2 z-10 text-gray-300 pointer-events-none">
-                    <FaLayerGroup size={14} />
-                  </div>
-                  <div className="pl-8">
-                    <SelectPersonalizado 
-                      options={opcoesGrupos}
-                      value={form.grupoMuscular}
-                      onChange={(val) => setForm({...form, grupoMuscular: val})}
-                      placeholder="SELECIONE..."
-                    />
-                  </div>
-                </div>
+                <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                  <FaAlignLeft size={10} /> descrição / notas
+                </label>
+                <textarea
+                  value={form.descricao}
+                  onChange={(e) => setForm(prev => ({ ...prev, descricao: e.target.value }))}
+                  placeholder="instruções técnicas ou observações..."
+                  rows={3}
+                  className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all resize-none"
+                />
               </div>
             </div>
 
-            <div className="flex flex-col md:flex-row gap-3 mt-10">
+            <div className="mt-8">
               <button 
-                onClick={onClose} 
-                className="flex-1 order-2 md:order-1 py-4 text-[10px] font-black text-gray-400 uppercase tracking-widest hover:bg-gray-50 rounded-xl transition-all"
-              >
-                cancelar
-              </button>
-              <button 
+                type="button"
                 disabled={isInvalido}
                 onClick={handleSave} 
-                className={`flex-[2] order-1 md:order-2 py-4 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
-                  isInvalido 
-                    ? "bg-gray-200 text-gray-400 cursor-not-allowed" 
-                    : "bg-blue-600 text-white shadow-xl shadow-blue-200 active:scale-95 hover:bg-blue-700"
+                className={`w-full py-5 rounded-2xl text-[11px] font-[1000] uppercase tracking-widest transition-all flex items-center justify-center gap-2 ${
+                  isInvalido ? "bg-gray-100 text-gray-300 cursor-not-allowed" : "bg-black text-white hover:bg-blue-600 shadow-xl"
                 }`}
               >
-                salvar exercício
+                {isSalvando ? (
+                  <span className="animate-pulse">processando...</span>
+                ) : (
+                  <><FaCheck size={12} /> {exercicioParaEditar ? "atualizar" : "salvar"} exercício</>
+                )}
               </button>
             </div>
           </div>
         </SlideIn>
       </div>
 
-      {/* modal de confirmação injetado aqui para ficar por cima (z-70) */}
-      <ModalConfirmacao 
-        isOpen={showConfirmDelete}
-        onClose={() => setShowConfirmDelete(false)}
-        onConfirm={handleConfirmDelete}
-        title="excluir?"
-        message="essa ação não pode ser desfeita. o exercício será removido permanentemente."
-        isCritical={true}
-      />
+      {showConfirmDelete && (
+        <div className="relative z-[100]"> 
+           <ModalConfirmacao 
+            isOpen={showConfirmDelete}
+            onClose={() => setShowConfirmDelete(false)}
+            onConfirm={handleConfirmDelete}
+            title="excluir exercício"
+            message={<>tem certeza que deseja excluir <span className="text-white font-black underline">{form.nome}</span>?</>}
+            isCritical={true}
+          />
+        </div>
+      )}
     </>
   );
 }

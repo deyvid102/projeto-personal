@@ -7,12 +7,10 @@ import {
   FaUserTimes, 
   FaUserClock, 
   FaArrowRight,
-  FaDumbbell 
+  FaDumbbell
 } from "react-icons/fa";
 
 export default function Dashboard() {
-  // CORREÇÃO: Alterado de { id: personalId } para { personalId }
-  // para bater com a rota definida no App.jsx
   const { personalId } = useParams();
   const navigate = useNavigate();
   const [stats, setStats] = useState({ total: 0, ativos: 0, suspensos: 0, cancelados: 0, recentes: [] });
@@ -20,21 +18,18 @@ export default function Dashboard() {
 
   useEffect(() => {
     async function fetchDashboardData() {
-      // Verificação de segurança para evitar fetch sem ID
       if (!personalId) return;
 
       try {
         const response = await fetch(`http://localhost:3000/alunos?fk_personal=${personalId}`);
         const data = await response.json();
         
-        // Se a API retornar erro ou não for array, evita quebra do código
         const listaAlunos = Array.isArray(data) ? data : [];
 
         const ativos = listaAlunos.filter(a => a.status === 'A').length;
         const suspensos = listaAlunos.filter(a => a.status === 'S').length;
         const cancelados = listaAlunos.filter(a => a.status === 'C').length;
         
-        // Pega os 5 últimos adicionados (assumindo que o ID é cronológico ou usando reverse)
         const recentes = [...listaAlunos].reverse().slice(0, 5);
 
         setStats({ total: listaAlunos.length, ativos, suspensos, cancelados, recentes });
@@ -47,25 +42,34 @@ export default function Dashboard() {
     fetchDashboardData();
   }, [personalId]);
 
-  if (loading) return null;
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <div className="animate-pulse flex flex-col items-center">
+          <div className="w-12 h-12 bg-gray-200 rounded-full mb-4"></div>
+          <div className="h-4 w-32 bg-gray-200 rounded"></div>
+        </div>
+      </div>
+    );
+  }
 
   return (
-    <div className="max-w-6xl mx-auto pb-24 px-4 md:px-0">
+    <div className="max-w-7xl mx-auto pb-24 px-6 md:px-8 pt-24">
       
-      {/* header */}
-      <div className="mt-6 md:mt-10 mb-8">
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">
-          Dashboard
+      {/* Header */}
+      <div className="mb-10">
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tighter uppercase italic leading-none">
+          Visão Geral
         </h1>
-        <p className="text-gray-400 text-[9px] md:text-[10px] font-bold mt-2 uppercase tracking-[0.2em]">
-          visão geral da consultoria
+        <p className="text-gray-400 text-[10px] font-bold mt-2 uppercase tracking-[0.2em]">
+          Monitoramento de performance da consultoria
         </p>
       </div>
 
-      {/* grid de métricas */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 mb-10">
+      {/* Grid de Métricas */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
         <StatCard 
-          title="Total" 
+          title="Total de Alunos" 
           value={stats.total} 
           icon={<FaUsers />} 
           color="blue"
@@ -79,14 +83,14 @@ export default function Dashboard() {
           onClick={() => navigate(`/${personalId}/alunos?status=A`)} 
         />
         <StatCard 
-          title="suspensos" 
+          title="Suspensos" 
           value={stats.suspensos} 
           icon={<FaUserClock />} 
           color="orange"
           onClick={() => navigate(`/${personalId}/alunos?status=S`)} 
         />
         <StatCard 
-          title="cancelados" 
+          title="Cancelados" 
           value={stats.cancelados} 
           icon={<FaUserTimes />} 
           color="red"
@@ -94,83 +98,100 @@ export default function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 md:gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
-        {/* lista de recentes */}
-        <div className="lg:col-span-2 order-2 lg:order-1">
-          <div className="flex items-center justify-between mb-4 px-1">
-            <h2 className="text-[10px] font-black text-gray-900 uppercase tracking-widest">Recentes</h2>
+        {/* Lista de Recentes */}
+        <div className="lg:col-span-2 flex flex-col h-full">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h2 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
+              Últimas Matrículas
+            </h2>
             <button 
               onClick={() => navigate(`/${personalId}/alunos`)}
-              className="text-[10px] font-black text-blue-600 uppercase tracking-widest cursor-pointer hover:underline"
+              className="text-[10px] font-bold text-blue-600 uppercase tracking-widest hover:text-blue-700 transition-colors"
             >
-              ver tudo
+              Ver todos
             </button>
           </div>
 
-          <div className="bg-white rounded-[1.5rem] border border-gray-100 overflow-hidden shadow-sm">
+          <div className="bg-white rounded-[2rem] border border-gray-100 shadow-xl shadow-gray-100/50 overflow-hidden flex-1">
             {stats.recentes.length > 0 ? (
-              stats.recentes.map((aluno, index) => (
-                <div 
-                  key={aluno._id}
-                  onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
-                  className={`flex items-center justify-between p-4 active:bg-gray-50 transition-all cursor-pointer group ${
-                    index !== stats.recentes.length - 1 ? "border-b border-gray-50" : ""
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="w-8 h-8 rounded-full bg-gray-50 flex items-center justify-center font-black text-gray-400 text-[10px]">
-                      {aluno.nome?.charAt(0)}
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-gray-900 text-xs uppercase tracking-tight truncate max-w-[150px]">
-                        {aluno.nome}
-                      </h3>
-                      <div className="flex items-center gap-2">
-                        <StatusDot status={aluno.status} />
-                        <span className="text-[10px] font-bold text-gray-500 uppercase tracking-tight">
-                          {aluno.objetivo?.toLowerCase() === "definicao" 
-                            ? "definição" 
-                            : (aluno.objetivo || "geral")}
-                        </span>
+              <div className="divide-y divide-gray-50">
+                {stats.recentes.map((aluno) => (
+                  <div 
+                    key={aluno._id}
+                    onClick={() => navigate(`/${personalId}/alunos/${aluno._id}`)}
+                    className="flex items-center justify-between p-5 hover:bg-gray-50 cursor-pointer transition-colors group"
+                  >
+                    <div className="flex items-center gap-4">
+                      <div className="w-10 h-10 rounded-2xl bg-gray-100 text-gray-500 flex items-center justify-center text-xs font-black uppercase shadow-inner">
+                        {aluno.nome?.charAt(0)}
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-[11px] font-black text-gray-900 leading-tight uppercase tracking-tight">
+                          {aluno.nome}
+                        </h3>
+                        <div className="flex items-center gap-2 mt-1">
+                          <StatusDot status={aluno.status} />
+                          <span className="text-[10px] font-medium text-gray-400 uppercase tracking-wide">
+                            {aluno.objetivo || "Geral"}
+                          </span>
+                        </div>
                       </div>
                     </div>
+                    
+                    <div className="w-8 h-8 rounded-full flex items-center justify-center bg-white border border-gray-100 text-gray-300 group-hover:border-blue-200 group-hover:text-blue-600 transition-all shadow-sm">
+                      <FaArrowRight size={10} />
+                    </div>
                   </div>
-                  <FaArrowRight size={10} className="text-gray-200 group-hover:text-blue-500 transition-colors" />
-                </div>
-              ))
+                ))}
+              </div>
             ) : (
-              <div className="p-8 text-center text-gray-300 font-bold uppercase text-[9px]">
-                vazio
+              <div className="h-40 flex flex-col items-center justify-center text-gray-300">
+                <FaUsers size={24} className="mb-2 opacity-20" />
+                <p className="text-[10px] font-bold uppercase tracking-widest">Nenhum aluno recente</p>
               </div>
             )}
           </div>
         </div>
 
-        {/* card exercícios */}
-        <div className="order-1 lg:order-2">
-          <div className="bg-black rounded-[2rem] p-6 text-white shadow-xl relative overflow-hidden group">
-            <div className="absolute -right-4 -bottom-4 opacity-10 text-blue-600">
-              <FaDumbbell size={100} />
+        {/* Card Exercícios */}
+        <div className="lg:col-span-1 flex flex-col">
+          <div className="flex items-center justify-between mb-4 px-2">
+            <h2 className="text-[11px] font-black text-gray-400 uppercase tracking-widest">
+              Gestão
+            </h2>
+          </div>
+
+          <div className="bg-gray-900 rounded-[2rem] p-8 text-white shadow-2xl shadow-gray-900/20 relative overflow-hidden group h-full flex flex-col justify-between">
+            <div className="absolute -right-6 -bottom-6 opacity-5 text-white transform rotate-12 group-hover:rotate-6 group-hover:scale-110 transition-transform duration-700">
+              <FaDumbbell size={180} />
             </div>
             
             <div className="relative z-10">
-              <div className="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center mb-4">
-                <FaDumbbell size={14} />
+              <div className="w-12 h-12 bg-white/10 backdrop-blur-md rounded-2xl flex items-center justify-center mb-6 border border-white/10">
+                <FaDumbbell size={20} className="text-blue-400" />
               </div>
-              <h3 className="text-xl md:text-2xl font-black tracking-tighter uppercase italic mb-2">
-                Gerenciar <br /> <span className="text-blue-500">Exercícios</span>
+              
+              <h3 className="text-3xl font-black tracking-tighter uppercase italic mb-2 leading-none">
+                Banco de <br />
+                <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-400 to-blue-600">
+                  Exercícios_
+                </span>
               </h3>
-              <p className="text-gray-500 text-[10px] font-bold uppercase tracking-tight mb-6">
-                biblioteca de movimentos.
+              
+              <p className="text-gray-400 text-xs font-medium leading-relaxed max-w-[200px] mt-4">
+                Gerencie sua biblioteca de movimentos, adicione vídeos e instruções.
               </p>
-              <button 
-                onClick={() => navigate(`/${personalId}/exercicios`)}
-                className="w-full bg-white text-black py-3 rounded-xl font-black text-[9px] uppercase tracking-[0.2em] active:scale-95 transition-all cursor-pointer hover:bg-gray-100"
-              >
-                Acessar
-              </button>
             </div>
+
+            <button 
+              onClick={() => navigate(`/${personalId}/exercicios`)}
+              className="relative z-10 mt-8 w-full bg-white text-gray-900 py-4 rounded-xl font-black text-[10px] uppercase tracking-[0.2em] hover:bg-blue-600 hover:text-white transition-colors shadow-lg active:scale-95"
+            >
+              Acessar Biblioteca
+            </button>
           </div>
         </div>
 
@@ -180,31 +201,28 @@ export default function Dashboard() {
 }
 
 function StatCard({ title, value, icon, color, onClick }) {
-  const colorMap = {
-    blue: "hover:bg-blue-50/80 text-blue-600",
-    green: "hover:bg-green-50/80 text-green-600",
-    orange: "hover:bg-orange-50/80 text-orange-500",
-    red: "hover:bg-red-50/80 text-red-500"
-  };
-
-  const iconBgMap = {
-    blue: "bg-blue-50/50",
-    green: "bg-green-50/50",
-    orange: "bg-orange-50/50",
-    red: "bg-red-50/50"
+  const styles = {
+    blue:   "bg-blue-50 text-blue-600 group-hover:bg-blue-600 group-hover:text-white",
+    green:  "bg-green-50 text-green-600 group-hover:bg-green-600 group-hover:text-white",
+    orange: "bg-orange-50 text-orange-600 group-hover:bg-orange-600 group-hover:text-white",
+    red:    "bg-red-50 text-red-600 group-hover:bg-red-600 group-hover:text-white"
   };
 
   return (
     <div 
       onClick={onClick}
-      className={`bg-white p-3.5 md:p-5 rounded-[1.2rem] md:rounded-[1.5rem] border border-gray-100 transition-all active:scale-95 cursor-pointer shadow-sm ${colorMap[color]}`}
+      className="bg-white p-5 rounded-[2rem] border border-gray-100 hover:border-transparent hover:shadow-xl hover:shadow-gray-200/50 transition-all duration-300 active:scale-95 cursor-pointer group flex flex-col justify-between h-32 md:h-40"
     >
-      <div className={`w-8 h-8 md:w-10 md:h-10 rounded-lg md:rounded-xl flex items-center justify-center mb-3 ${iconBgMap[color]}`}>
-        <div className="scale-90">{icon}</div>
+      <div className="flex justify-between items-start">
+        <div className={`w-10 h-10 rounded-2xl flex items-center justify-center transition-colors duration-300 ${styles[color]}`}>
+          <div className="text-sm">{icon}</div>
+        </div>
+        <FaArrowRight className="opacity-0 -translate-x-2 group-hover:opacity-100 group-hover:translate-x-0 transition-all text-gray-300 text-xs" />
       </div>
+
       <div>
-        <p className="text-[8px] md:text-[9px] font-black text-gray-400 uppercase tracking-wider mb-0.5">{title}</p>
-        <p className="text-xl md:text-2xl font-black text-gray-900 tracking-tighter">{value}</p>
+        <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mb-1">{title}</p>
+        <p className="text-3xl font-black text-gray-900 tracking-tighter leading-none">{value}</p>
       </div>
     </div>
   );
