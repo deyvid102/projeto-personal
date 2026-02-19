@@ -1,10 +1,12 @@
 import { useState, useEffect } from "react";
-import { useNavigate } from "react-router-dom";
+// CORREÇÃO: Certifique-se de que o useNavigate está aqui
+import { useNavigate } from "react-router-dom"; 
 import logo from "../assets/HP.png";
 import { FaSpinner, FaArrowLeft } from "react-icons/fa";
 import { Hash } from "lucide-react";
 
 export default function UsuarioLogin({ onLogin }) {
+  // Agora o hook funcionará corretamente
   const navigate = useNavigate();
   const [accessCode, setAccessCode] = useState("");
   const [erro, setErro] = useState("");
@@ -26,7 +28,6 @@ export default function UsuarioLogin({ onLogin }) {
       const controller = new AbortController();
       const id = setTimeout(() => controller.abort(), 8000);
       
-      // Ajustado para buscar na sua rota de alunos
       const response = await fetch("http://localhost:3000/alunos", { 
         signal: controller.signal 
       });
@@ -36,7 +37,6 @@ export default function UsuarioLogin({ onLogin }) {
       
       const alunos = await response.json();
       
-      // Procura o aluno pelo código de acesso e que esteja ativo (status 'A')
       const aluno = alunos.find(
         (a) => a.codigoAcesso === accessCode.trim() && a.status === 'A'
       );
@@ -47,11 +47,8 @@ export default function UsuarioLogin({ onLogin }) {
         return;
       }
 
-      // Persistência seguindo o padrão do seu App.js
-      localStorage.setItem("userId", aluno._id);
-      localStorage.setItem("userType", "aluno");
-      
-      if (onLogin) onLogin(aluno);
+      // Chama a função do App.js passando o tipo "aluno"
+      if (onLogin) onLogin(aluno, "aluno");
       
       navigate(`/aluno/${aluno._id}`);
     } catch (err) {
@@ -139,6 +136,7 @@ export default function UsuarioLogin({ onLogin }) {
       {/* LADO DIREITO: IMAGEM */}
       <div className="hidden md:block md:w-1/2 relative bg-cover bg-center" 
            style={{ backgroundImage: "url('https://images.unsplash.com/photo-1534438327276-14e5300c3a48?q=80&w=1470&auto=format&fit=crop')" }}>
+            <div className="absolute inset-0 bg-black/70"></div>
         <div className="absolute inset-0 bg-gradient-to-br from-black/80 via-black/20 to-transparent"></div>
         <div className="absolute inset-0 flex flex-col justify-end p-12">
           <div className="space-y-3">

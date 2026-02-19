@@ -11,8 +11,6 @@ import ProjetoDetalhe from "./pages/ProjetoDetalhe";
 import TreinoDetalhe from "./pages/TreinoDetalhe";
 import Exercicios from "./pages/Exercicios";
 import SelectProfile from "./pages/SelectProfile";
-
-// IMPORTAÇÃO DO USUARIO LOGIN (EM SRC/USUARIO)
 import UsuarioLogin from "./usuario/UsuarioLogin";
 
 function App() {
@@ -25,7 +23,7 @@ function App() {
     const storedUserId = localStorage.getItem("userId");
     const storedUserType = localStorage.getItem("userType");
     
-    if (storedUserId) {
+    if (storedUserId && storedUserType) {
       setIsAuthenticated(true);
       setUserId(storedUserId);
       setUserType(storedUserType);
@@ -33,18 +31,17 @@ function App() {
     setLoading(false);
   }, []);
 
-  function handleLogin(user) {
-    const type = localStorage.getItem("userType");
-    
+  // Alterado para receber o tipo explicitamente
+  function handleLogin(user, type) {
     localStorage.setItem("userId", user._id);
+    localStorage.setItem("userType", type);
     setIsAuthenticated(true);
     setUserId(user._id);
     setUserType(type);
   }
 
   function handleLogout() {
-    localStorage.removeItem("userId");
-    localStorage.removeItem("userType");
+    localStorage.clear(); // Limpa tudo de uma vez
     setIsAuthenticated(false);
     setUserId(null);
     setUserType(null);
@@ -55,55 +52,27 @@ function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ROTA INICIAL: SELEÇÃO DE PERFIL */}
-        <Route 
-          path="/" 
-          element={
-            isAuthenticated ? (
-              userType === "personal" ? <Navigate to={`/${userId}`} /> : <Navigate to={`/aluno/${userId}`} />
-            ) : (
-              <SelectProfile />
-            )
-          } 
-        />
+        {/* ROTAS PÚBLICAS */}
+        <Route path="/" element={
+          isAuthenticated ? (
+            userType === "personal" ? <Navigate to={`/${userId}`} /> : <Navigate to={`/aluno/${userId}`} />
+          ) : <SelectProfile />
+        } />
 
-        {/* ROTA DE LOGIN DO PERSONAL */}
-        <Route
-          path="/login"
-          element={
-            isAuthenticated ? (
-              userType === "personal" ? <Navigate to={`/${userId}`} /> : <Navigate to={`/aluno/${userId}`} />
-            ) : (
-              <Login onLogin={handleLogin} />
-            )
-          }
-        />
+        <Route path="/login" element={
+          isAuthenticated ? <Navigate to="/" /> : <Login onLogin={(u) => handleLogin(u, "personal")} />
+        } />
 
-        {/* ROTA DE LOGIN DO ALUNO (CRIADA AGORA) */}
-        <Route
-          path="/login-aluno"
-          element={
-            isAuthenticated ? (
-              userType === "aluno" ? <Navigate to={`/aluno/${userId}`} /> : <Navigate to={`/${userId}`} />
-            ) : (
-              <UsuarioLogin />
-            )
-          }
-        />
+        <Route path="/login-aluno" element={
+          isAuthenticated ? <Navigate to="/" /> : <UsuarioLogin onLogin={(u) => handleLogin(u, "aluno")} />
+        } />
 
-        <Route
-          path="/register"
-          element={
-            isAuthenticated ? (
-              userType === "personal" ? <Navigate to={`/${userId}`} /> : <Navigate to={`/aluno/${userId}`} />
-            ) : (
-              <Register />
-            )
-          }
-        />
+        <Route path="/register" element={
+          isAuthenticated ? <Navigate to="/" /> : <Register />
+        } />
 
-        {/* ROTAS PROTEGIDAS PARA PERSONAL */}
-        {isAuthenticated && userType === "personal" ? (
+        {/* ROTAS PROTEGIDAS - PERSONAL */}
+        {isAuthenticated && userType === "personal" && (
           <Route element={<Layout onLogout={handleLogout} />}>
             <Route path="/:personalId" element={<Dashboard />} />
             <Route path="/:personalId/alunos" element={<Alunos />} />
@@ -111,16 +80,16 @@ function App() {
             <Route path="/:personalId/alunos/:alunoId/projetos/:projetoId/treinos/:treinoId" element={<TreinoDetalhe />} />
             <Route path="/:personalId/exercicios" element={<Exercicios />} />
             <Route path="/:personalId/alunos/:alunoId/projetos/:projetoId" element={<ProjetoDetalhe />} />
-            
-            <Route path="*" element={<Navigate to={`/${userId}`} />} />
           </Route>
-        ) : isAuthenticated && userType === "aluno" ? (
-          /* ROTAS ESPECÍFICAS DO ALUNO */
-          <Route path="/aluno/:alunoId" element={<div>tela do aluno em desenvolvimento</div>} />
-        ) : (
-          /* SE NÃO ESTIVER AUTENTICADO */
-          <Route path="*" element={<Navigate to="/" />} />
         )}
+
+        {/* ROTAS PROTEGIDAS - ALUNO */}
+        {isAuthenticated && userType === "aluno" && (
+          <Route path="/aluno/:alunoId" element={<div>Tela do Aluno em Desenvolvimento - ID: {userId}</div>} />
+        )}
+
+        {/* REDIRECIONAMENTO GLOBAL PARA NÃO AUTENTICADOS */}
+        <Route path="*" element={<Navigate to="/" replace />} />
       </Routes>
     </BrowserRouter>
   );
