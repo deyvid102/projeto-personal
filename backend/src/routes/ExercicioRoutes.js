@@ -1,14 +1,10 @@
 import express from "express";
-import {
-    criarExercicio,
-    listarExercicios, // função unificada
-    atualizarExercicio,
-    deletarExercicio
-} from "../controllers/ControlExercicio.js";
+import upload from "../middlewares/upload.js";
+import { criarExercicio, listarExercicios, atualizarExercicio, deletarExercicio } from "../controllers/ControlExercicio.js";
 
 const router = express.Router();
 
-router.post('/', criarExercicio);
+router.post('/', upload.single("file"), criarExercicio);
 
 // as duas rotas abaixo usam a mesma função listarExercicios
 router.get('/', listarExercicios); 

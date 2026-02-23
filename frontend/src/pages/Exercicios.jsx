@@ -119,7 +119,7 @@ export default function Exercicios() {
               <div>
                 <div className="flex items-center gap-3 mb-1">
                   <h1 className="text-2xl md:text-3xl font-[1000] text-gray-900 tracking-[-0.05em] uppercase italic leading-none">Biblioteca</h1>
-                  <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic leading-none text-blue-600">Exercícios_</h2>
+                  <h2 className="text-xl md:text-3xl font-black tracking-tighter uppercase italic leading-none text-blue-600">Exercícios</h2>
                 </div>
                 <p className="text-gray-400 font-bold text-[9px] uppercase tracking-[0.2em]">{exerciciosFiltrados.length} encontrados</p>
               </div>
@@ -180,7 +180,7 @@ export default function Exercicios() {
                   </span>
                   {ex.publico ? <FaGlobeAmericas className="text-blue-600" size={13} /> : <FaDumbbell className="text-gray-100 group-hover:text-blue-600" size={13} />}
                 </div>
-                
+
                 <h3 className="font-black text-gray-900 uppercase tracking-tighter text-[10px] leading-tight mb-1 line-clamp-2">
                   {ex.nome}
                 </h3>
@@ -193,6 +193,20 @@ export default function Exercicios() {
                     </span>
                   </div>
                 )}
+
+                {/* BLOCO DE MÍDIA */}
+                <div className="mb-3">
+                  {ex.midia?.tipo === "video" ? (
+                    <video src={ex.midia.key} controls className="w-full rounded-lg" />
+                  ) : ex.midia?.tipo === "imagem" ? (
+                    <img src={ex.midia.key} alt={ex.nome} className="w-full rounded-lg object-cover" />
+                  ) : (
+                    <div className="w-full h-32 flex items-center justify-center bg-gray-50 rounded-lg">
+                      <span className="text-gray-400 text-xs">Sem mídia</span>
+                    </div>
+                  )}
+                </div>
+                {/* FIM DO BLOCO DE MÍDIA */}
 
                 <div className="mt-auto pt-2.5 border-t border-gray-50 flex items-center justify-end">
                   <button 

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { FaTrashAlt, FaTimes, FaCheck, FaDumbbell, FaLayerGroup, FaTools, FaAlignLeft } from "react-icons/fa";
+import { FaTrashAlt, FaTimes, FaCheck, FaDumbbell, FaLayerGroup, FaTools, FaAlignLeft, FaCamera, FaImage, FaVideo, FaCloudUploadAlt } from "react-icons/fa";
 import SlideIn from "../SlideIn";
 import SelectPersonalizado from "../SelectPersonalizado";
 import Alert from "../Alert"; 
@@ -47,6 +47,7 @@ export default function ModalExercicio({
     descricao: "",
     fk_personal: storedUserId,
     publico: false,
+    media: null,
   });
 
   useEffect(() => {
@@ -79,59 +80,114 @@ export default function ModalExercicio({
     }
   }, [exercicioParaEditar, storedUserId, nomeSugerido]);
 
-  const handleSave = async () => {
-    const nomeNormalizado = String(form.nome || "").trim();
+const handleSave = async () => {
+  const nomeNormalizado = String(form.nome || "").trim();
+  if (!nomeNormalizado || !form.grupoMuscular) {
+    showAlert("Preencha nome e grupo muscular", "warning");
+    return;
+  }
 
-    if (!nomeNormalizado) {
-      showAlert("insira o nome do exercício", "warning");
-      return;
-    }
+  const equipamentoFinal = form.equipamento === "outros" ? equipamentoOutros : form.equipamento;
 
-    const jaExiste = bibliotecaExistente.some(ex => 
-      ex.nome.toLowerCase() === nomeNormalizado.toLowerCase() && 
-      ex._id !== (exercicioParaEditar?._id || exercicioParaEditar?.id)
-    );
+  try {
+    setIsSalvando(true);
+    const formData = new FormData();
 
-    if (jaExiste) {
-      showAlert("esse exercício já existe na sua biblioteca", "warning");
-      return;
-    }
-
-    if (!form.grupoMuscular) {
-      showAlert("selecione o grupo muscular", "warning");
-      return;
-    }
-
-    // Define o valor final do equipamento (se for outros, usa o texto digitado)
-    const equipamentoFinal = form.equipamento === "outros" ? equipamentoOutros : form.equipamento;
+    formData.append("nome", nomeNormalizado);
+    formData.append("grupoMuscular", form.grupoMuscular);
+    formData.append("equipamento", equipamentoFinal || "");
+    formData.append("descricao", form.descricao || "");
     
-    try {
-      setIsSalvando(true);
-      const isEdicao = !!exercicioParaEditar;
-      const url = isEdicao 
-        ? `http://localhost:3000/exercicios/${exercicioParaEditar._id || exercicioParaEditar.id}`
-        : `http://localhost:3000/exercicios`;
-
-      const res = await fetch(url, {
-        method: isEdicao ? "PUT" : "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          ...form, 
-          nome: nomeNormalizado,
-          equipamento: equipamentoFinal 
-        }),
-      });
-
-      if (!res.ok) throw new Error("erro ao comunicar com servidor");
-
-      const exercicioSalvo = await res.json();
-      await onSave(exercicioSalvo); 
-    } catch (err) {
-      showAlert("erro ao salvar exercício", "error");
-    } finally {
-      setIsSalvando(false);
+    // IMPORTANTE: Só envia o ID se ele realmente existir e for válido
+    if (form.fk_personal && form.fk_personal !== "null") {
+      formData.append("fk_personal", form.fk_personal);
     }
-  };
+    
+    formData.append("publico", "false"); 
+
+    if (form.media) {
+      formData.append("file", form.media); 
+    }
+
+    const isEdicao = !!exercicioParaEditar;
+    const url = isEdicao 
+      ? `http://localhost:3000/exercicios/${exercicioParaEditar._id || exercicioParaEditar.id}`
+      : `http://localhost:3000/exercicios`;
+
+    const res = await fetch(url, {
+      method: isEdicao ? "PUT" : "POST",
+      body: formData, // Sem Headers!
+    });
+
+    const data = await res.json();
+
+    if (!res.ok) {
+      // Agora o erro que o Mongoose der vai aparecer aqui
+      throw new Error(data.error || "Erro ao salvar exercício");
+    }
+
+    await onSave(data);
+  } catch (err) {
+    console.error("Erro no post:", err);
+    showAlert(err.message, "error");
+  } finally {
+    setIsSalvando(false);
+  }
+};
+
+  // const handleSave = async () => {
+  //   const nomeNormalizado = String(form.nome || "").trim();
+
+  //   if (!nomeNormalizado) {
+  //     showAlert("insira o nome do exercício", "warning");
+  //     return;
+  //   }
+
+  //   const jaExiste = bibliotecaExistente.some(ex => 
+  //     ex.nome.toLowerCase() === nomeNormalizado.toLowerCase() && 
+  //     ex._id !== (exercicioParaEditar?._id || exercicioParaEditar?.id)
+  //   );
+
+  //   if (jaExiste) {
+  //     showAlert("esse exercício já existe na sua biblioteca", "warning");
+  //     return;
+  //   }
+
+  //   if (!form.grupoMuscular) {
+  //     showAlert("selecione o grupo muscular", "warning");
+  //     return;
+  //   }
+
+  //   // Define o valor final do equipamento (se for outros, usa o texto digitado)
+  //   const equipamentoFinal = form.equipamento === "outros" ? equipamentoOutros : form.equipamento;
+    
+  //   try {
+  //     setIsSalvando(true);
+  //     const isEdicao = !!exercicioParaEditar;
+  //     const url = isEdicao 
+  //       ? `http://localhost:3000/exercicios/${exercicioParaEditar._id || exercicioParaEditar.id}`
+  //       : `http://localhost:3000/exercicios`;
+
+  //     const res = await fetch(url, {
+  //       method: isEdicao ? "PUT" : "POST",
+  //       headers: { "Content-Type": "application/json" },
+  //       body: JSON.stringify({ 
+  //         ...form, 
+  //         nome: nomeNormalizado,
+  //         equipamento: equipamentoFinal 
+  //       }),
+  //     });
+
+  //     if (!res.ok) throw new Error("erro ao comunicar com servidor");
+
+  //     const exercicioSalvo = await res.json();
+  //     await onSave(exercicioSalvo); 
+  //   } catch (err) {
+  //     showAlert("erro ao salvar exercício", "error");
+  //   } finally {
+  //     setIsSalvando(false);
+  //   }
+  // };
 
   const handleConfirmDelete = () => {
     const idParaDeletar = exercicioParaEditar?._id || exercicioParaEditar?.id;
@@ -170,7 +226,7 @@ export default function ModalExercicio({
 
             <div className="mb-8 pr-20">
               <h2 className="text-xl md:text-2xl font-[1000] text-gray-900 uppercase italic tracking-tighter leading-none">
-                {exercicioParaEditar ? "editar" : "novo"} <span className="text-blue-600">exercício_</span>
+                {exercicioParaEditar ? "editar" : "novo"} <span className="text-blue-600">exercício</span>
               </h2>
               <p className="text-[9px] font-black text-gray-400 uppercase tracking-widest mt-1 ml-1">biblioteca privada</p>
             </div>
@@ -238,6 +294,68 @@ export default function ModalExercicio({
                   rows={3}
                   className="w-full bg-gray-50 border-2 border-transparent focus:border-blue-600/20 rounded-2xl px-5 py-4 text-xs font-bold outline-none transition-all resize-none"
                 />
+              </div>
+            </div>
+
+            {/* Mídia (Foto ou Vídeo) */}
+            <div className="space-y-1">
+              <label className="flex items-center gap-2 text-[10px] font-black text-gray-400 uppercase tracking-widest ml-1">
+                <FaCamera size={10} /> Mídia (Foto ou Vídeo)
+              </label>
+              
+              <div className="relative group">
+                <input
+                  type="file"
+                  accept="image/*,video/*"
+                  className="hidden"
+                  id="media-upload"
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    if (file) {
+                      setForm(prev => ({ ...prev, media: file }));
+                    }
+                  }}
+                />
+                <label 
+                  htmlFor="media-upload"
+                  className={`w-full border-2 border-dashed flex flex-col items-center justify-center p-6 rounded-2xl cursor-pointer transition-all ${
+                    form.media 
+                      ? "border-blue-600/30 bg-blue-50/30" 
+                      : "border-gray-100 bg-gray-50 hover:bg-gray-100 hover:border-gray-200"
+                  }`}
+                >
+                  {form.media ? (
+                    <div className="flex items-center gap-3">
+                      <div className="bg-blue-600 text-white p-2 rounded-lg">
+                        {form.media.type.startsWith('video') ? <FaVideo size={14} /> : <FaImage size={14} />}
+                      </div>
+                      <div className="text-left">
+                        <p className="text-[10px] font-bold text-gray-900 truncate max-w-[200px]">
+                          {form.media.name}
+                        </p>
+                        <p className="text-[8px] font-black text-blue-600 uppercase tracking-tighter">
+                          Arquivo selecionado
+                        </p>
+                      </div>
+                      <button 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          setForm(prev => ({ ...prev, media: null }));
+                        }}
+                        className="ml-2 text-gray-400 hover:text-red-500 transition-colors"
+                      >
+                        <FaTimes size={14} />
+                      </button>
+                    </div>
+                  ) : (
+                    <>
+                      <FaCloudUploadAlt className="text-gray-300 mb-2" size={24} />
+                      <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">
+                        Clique para enviar ou galeria
+                      </span>
+                    </>
+                  )}
+                </label>
               </div>
             </div>
 
